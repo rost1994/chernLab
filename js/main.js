@@ -455,7 +455,7 @@ function enrichXY() {
 
     // For '|' we have:
     tempN = Math.floor(n / 3);
-    for (i = 1; i < tempN; ++i) {
+    for (i = 1; i <= tempN; ++i) {
         var point = [
             xyBeg[0],
             xyBeg[1] + i * step
@@ -467,7 +467,7 @@ function enrichXY() {
 
     // For second '-' we have:
     //for (i = tempN - 1; i >= 0; --i) {
-	for (i = 0; i <= tempN; ++i) {
+	for (i = 1; i <= tempN; ++i) {
         var point = [
             xyBeg[0] + i * step,
             xyBeg[1] + a
@@ -554,22 +554,15 @@ function processGammaWCoordinates() {
             xyGammaW[i][1] + tStep * vT[1],
             xyGammaW[i][2]
         ];
-		console.log('|||||||||||||');
-		console.log(xyGammaTemp);
 
-		if (xyAngular.indexOf(i) === -1) {
-			xyGammaW[i] = correctBorderIntersect(xyGammaW[i], xyGammaTemp);
-		} else {
-			xyGammaW[i] = xyGammaTemp;
-		}
-		console.log(xyGammaW[i]);
+		xyGammaW[i] = correctBorderIntersect(xyGammaW[i], xyGammaTemp);
     }
 }
 
 function correctBorderIntersect(pointOld, pointNew) {
     var middlePointX = (pointOld[0] + pointNew[0]) / 2,
         middlePointY = (pointOld[1] + pointNew[1]) / 2,
-        delta = pointDelta();
+        delta = pointDelta() + 0.001;
 
     if ((middlePointY > xyBeg[1]) && (middlePointY < xyBeg[1] + 1)) {
         if (((pointNew[0] > xyBeg[0]) && (pointOld[0] < xyBeg[0]))
@@ -577,12 +570,6 @@ function correctBorderIntersect(pointOld, pointNew) {
 
             pointNew[0] = xyBeg[0] - (pointNew[0] - pointOld[0]);
         }
-
-/*         if (((pointNew[0] > xyBeg[0] + 1) && (pointOld[0] < xyBeg[0] + 1))
-            || ((pointNew[0] < xyBeg[0] + 1) && (pointOld[0] > xyBeg[0] + 1))) {
-
-            pointNew[0] = xyBeg[0] + 1 - (pointNew[0] - pointOld[0]);
-        } */
     }
 
     if ((middlePointX > xyBeg[0]) && (middlePointX < xyBeg[0] + 1)) {
@@ -605,21 +592,22 @@ function correctBorderIntersect(pointOld, pointNew) {
                 (pointOther > coordBeg) &&
                 (pointOther < coordEnd);
         },
-        correctStripIntersect = function (pointOldCoord, coordInterset) {
-            if (pointOldCoord < coordInterset) {
+        correctStripIntersect = function (pointOldCoord, coordInterset, invert) {
+			if (pointOldCoord < coordInterset) {
                 return coordInterset - delta;
-            } else {
+            } else if (pointOldCoord > coordInterset) {
                 return coordInterset + delta;
-            }
+            } else if (pointOldCoord === coordInterset) {
+				return invert ? coordInterset - delta : coordInterset + delta;
+			}
         };
 
     if (inStripCheck(pointNew[0], pointNew[1], xyBeg[0], xyBeg[1], xyBeg[1] + a)) {
-        pointNew[0] = correctStripIntersect(pointOld[0], xyBeg[0]);
+        pointNew[0] = correctStripIntersect(pointOld[0], xyBeg[0], false);
     } else if (inStripCheck(pointNew[1], pointNew[0], xyBeg[1] + a, xyBeg[0], xyBeg[0] + a)) {
-        pointNew[1] = correctStripIntersect(pointOld[1], xyBeg[1] + a);
-    //} else if (inStripCheck(pointNew[0], pointNew[1], xyBeg[0] + a, xyBeg[1], xyBeg[1] + a)) {
+        pointNew[1] = correctStripIntersect(pointOld[1], xyBeg[1] + a, false);
 	} else if (inStripCheck(pointNew[1], pointNew[0], xyBeg[1], xyBeg[0], xyBeg[0] + a)) {
-        pointNew[1] = correctStripIntersect(pointOld[1], xyBeg[1]);
+        pointNew[1] = correctStripIntersect(pointOld[1], xyBeg[1], true);
     }
 
     return pointNew;
