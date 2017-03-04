@@ -2,39 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Lab 2</title>
-    <script type="text/javascript" src="js/gauss.js"></script>
+    <title>Diploma</title>
     <script type="text/javascript" src="js/lib/plotly-latest.min.js"></script>
     <script type="text/javascript" src="js/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="js/main.js"></script>
+    <!--<script type="text/javascript" src="js/main.js"></script>-->
+    <script type="text/javascript" src="js/classes/contour.js"></script>
+    <script type="text/javascript" src="js/classes/gauss.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
 </head>
 <body>
 <div>
     Кількість вузлів:       <input type="text" name="n-count" id="n-count" value="55"><br>
-    Початкова точка х:      <input type="text" name="a-x" id="a-x" value="0"><br>
-    Початкова точка y:      <input type="text" name="a-y" id="a-y" value="0"><br>
-    Кінцева точка х:        <input type="text" name="b-x" id="b-x" value="9"><br>
-    Кінцева точка y:        <input type="text" name="b-y" id="b-y" value="3"><br>
-    Початкова швидкість x:  <input type="text" name="v-x" id="v-x" value="1"><br>
-    Початкова швидкість y:  <input type="text" name="v-y" id="v-y" value="0"><br>
-    Циркуляція:             <input type="text" name="gamma" id="gamma" value="0"><br>
+    Початок графіку, х:     <input type="text" name="a-x" id="a-x" value="0"><br>
+    Початок графіку, y:     <input type="text" name="a-y" id="a-y" value="0"><br>
+    Кінець графіку, х:      <input type="text" name="b-x" id="b-x" value="9"><br>
+    Кінець графіку, y:      <input type="text" name="b-y" id="b-y" value="6"><br>
+    Параметр a:             <input type="text" name="model-a" id="model-a" value="1"><br>
+    Параметр b:             <input type="text" name="model-b" id="model-b" value="1"><br>
+    Параметр alpha:         <input type="text" name="model-alpha" id="model-alpha" value="0.5"><br>
+    Параметр delta:         <input type="text" name="model-delta" id="model-delta" value="0.1"><br>
+    Радіус:                 <input type="text" name="model-radius" id="model-radius" value="1"><br>
+    Початок фігури, x:      <input type="text" name="contour-x" id="contour-x" value="1"><br>
+    Початок фігури, y:      <input type="text" name="contour-y" id="contour-y" value="4"><br>
+    <!--Циркуляція:             <input type="text" name="gamma" id="gamma" value="0"><br>-->
     <!--Початковий момент часу: <input type="text" name="t-beg" id="t-beg" value="0"><br>-->
     <!--Шаг по часу:            <input type="text" name="t-step" id="t-step" value="0.01"><br>-->
-    Гафіка через 500 шагів:  <input type="checkbox" name="forceCalc" id="forceCalc" /><br>
+    <!--Гафіка через 500 шагів:  <input type="checkbox" name="forceCalc" id="forceCalc" /><br>-->
     <input type="button" id="eval" value="Рахувати!">
 </div>
 <div id="solution" style="display: none">
-    <div id="view-controls">
-        <input name="view" class="view" type="radio" value="speed">Напрям швидкостей<br>
-        <input name="view" class="view" type="radio" value="speedConcentration">Розподіл швидості<br>
-        <input name="view" class="view" type="radio" value="pressure">Тиск<br>
-        <input name="view" class="view" type="radio" value="dfiDt">dfi/dt<br>
-        <input name="view" class="view" type="radio" value="potential">Потенціальне поле<br>
-        <input name="view" class="view" type="radio" value="potentialDip">Потенціальне поле (Диполярний підхід)<br>
-        <input name="view" class="view" type="radio" value="flowLines">Лінії току<br>
-    </div>
-    <input type="button" id="next" value="Наступний крок">
-    <div id="graph" style="width: 100%; height: 500px;"></div>
+    <!--<div id="view-controls">-->
+        <!--<input name="view" class="view" type="radio" value="speed">Напрям швидкостей<br>-->
+        <!--<input name="view" class="view" type="radio" value="speedConcentration">Розподіл швидості<br>-->
+        <!--<input name="view" class="view" type="radio" value="pressure">Тиск<br>-->
+        <!--<input name="view" class="view" type="radio" value="dfiDt">dfi/dt<br>-->
+        <!--<input name="view" class="view" type="radio" value="potential">Потенціальне поле<br>-->
+        <!--<input name="view" class="view" type="radio" value="potentialDip">Потенціальне поле (Диполярний підхід)<br>-->
+        <!--<input name="view" class="view" type="radio" value="flowLines">Лінії току<br>-->
+    <!--</div>-->
+    <!--<input type="button" id="next" value="Наступний крок">-->
+    <div id="graph"></div>
 </div>
 </body>
 </html>
