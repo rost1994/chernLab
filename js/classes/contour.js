@@ -14,16 +14,14 @@ var Contour = function () {
     /**
      * Initialize Contour with given lengths
      * @param a float - width
-     * @param b float - height
      * @param alpha float - angle of circle sector,
      * @param delta float - 'y' offset of circle,
      * @param radius float - radius
      * @param n int   - number of points
      * @param p {float, float} - center of top left contour point
      */
-    this.initialize = function(a, b, alpha, delta, radius, n, p) {
+    this.initialize = function(a, alpha, delta, radius, n, p) {
         _a = a;
-        _b = b;
         _alpha = alpha;
         _delta = delta;
         _n = n;
@@ -55,12 +53,12 @@ var Contour = function () {
      * @private
      */
     var _pointsCalculate = function (p) {
+        var hordSquare = 2 * Math.pow(_radius, 2) * (1 - Math.cos(_alpha));
+        _b = Math.sqrt(hordSquare) * Math.cos((Math.PI - _alpha) / 2) + _delta;
+
         var segmentLength = _radius * (2 * Math.PI - _alpha),
             length = 2 * _a + _b + segmentLength,
-            hordX = (function () {
-                var hordSquare = 2 * Math.pow(_radius, 2) * (1 - Math.cos(_alpha));
-                return Math.sqrt(hordSquare - Math.pow((_b - _delta), 2));
-            })(),
+            hordX = Math.sqrt(hordSquare - Math.pow((_b - _delta), 2)),
             step = length / _n;
 
         var i;
@@ -98,8 +96,7 @@ var Contour = function () {
         var nLeft = _n - _points.length + 1,
             angleStep = (2 * Math.PI - _alpha) / nLeft,
             x0 = _a + hordX + p.x,
-            y0 = p.y - _delta - _radius,
-            rotateAngle = Math.PI / 2 + _alpha;
+            y0 = p.y - _delta - _radius;
 
         for (i = Math.PI / 2 + _alpha + angleStep; i <= 2.5 * Math.PI; i += angleStep) {
             var tempX = _radius * Math.cos(i),

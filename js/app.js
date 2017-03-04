@@ -18,7 +18,6 @@ $(function () {
         plotXY[1][0] = parseFloat($('#a-y').val());
         plotXY[1][1] = parseFloat($('#b-y').val());
         a = parseFloat($('#model-a').val());
-        b = parseFloat($('#model-b').val());
         alpha = parseFloat($('#model-alpha').val());
         delta = parseFloat($('#model-delta').val());
         radius = parseFloat($('#model-radius').val());
@@ -28,7 +27,7 @@ $(function () {
         };
 
         var contour = new Contour();
-        contour.initialize(a, b, alpha, delta, radius, n, p);
+        contour.initialize(a, alpha, delta, radius, n, p);
 
         var points = contour.getPoints();
         var discretePoints = contour.getDiscretePoints();
