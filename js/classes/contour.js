@@ -9,7 +9,8 @@ var Contour = function () {
         _radius,
         _n,
         _points = [],
-        _discretePoints = [];
+        _discretePoints = [],
+        _eps = 0;
 
     /**
      * Initialize Contour with given lengths
@@ -17,7 +18,7 @@ var Contour = function () {
      * @param alpha float - angle of circle sector,
      * @param delta float - 'y' offset of circle,
      * @param radius float - radius
-     * @param n int   - number of points
+     * @param n int - number of points
      * @param p {float, float} - center of top left contour point
      */
     this.initialize = function(a, alpha, delta, radius, n, p) {
@@ -45,6 +46,14 @@ var Contour = function () {
      */
     this.getDiscretePoints = function () {
         return _discretePoints;
+    };
+
+    /**
+     * Return epsilon
+     * @return {number}
+     */
+    this.getEpsilon = function () {
+        return _eps;
     };
 
     /**
@@ -93,6 +102,8 @@ var Contour = function () {
 
         _discretePoints.push(_points.length - 1);
 
+        var epsilonIndexStart = _points.length - 2;
+
         var nLeft = _n - _points.length + 1,
             angleStep = (2 * Math.PI - _alpha) / nLeft,
             x0 = _a + hordX + p.x,
@@ -112,7 +123,31 @@ var Contour = function () {
         };
 
         _discretePoints.push(_points.length - 1);
-    }
+
+        _eps = _processEpsilon(epsilonIndexStart) / 2;
+    };
+
+    /**
+     * @param index int - first index of three points between which max eps contains
+     * @private
+     * @return {number}
+     */
+    var _processEpsilon = function (index) {
+        var point1 = _points[index],
+            point2 = _points[index + 1],
+            point3 = _points[index + 2];
+
+        /**
+         * @param p1 Object
+         * @param p2 Object
+         * @return {number}
+         */
+        var distance = function (p1, p2) {
+            return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2));
+        };
+
+        return Math.max(distance(point1, point2), distance(point2, point3), distance(point3, point1));
+    };
 };
 
 Contour.RADIUS = 1;

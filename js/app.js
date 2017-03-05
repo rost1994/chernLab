@@ -1,8 +1,9 @@
+
+
 $(function () {
     var n,
         plotXY = [[], []],
         a,
-        b,
         alpha,
         delta,
         radius,
@@ -29,8 +30,9 @@ $(function () {
         var contour = new Contour();
         contour.initialize(a, alpha, delta, radius, n, p);
 
-        var points = contour.getPoints();
-        var discretePoints = contour.getDiscretePoints();
+        var points = contour.getPoints(),
+            discretePoints = contour.getDiscretePoints(),
+            espilon = contour.getEpsilon();
 
         var xPoints = [],
             yPoints = [];
@@ -48,16 +50,21 @@ $(function () {
             }
         ];
 
-        for (i = 0; i < discretePoints.length; ++i) {
-            data.push(
-                {
-                    x: points[discretePoints[i]].x,
-                    y: points[discretePoints[i]].y,
-                    mode: 'markers',
-                    type: 'scatter'
-                }
-            );
-        }
+        var pointsArrayX = discretePoints.map(function (x) {
+                return points[x].x;
+            }),
+            pointsArrayY = discretePoints.map(function (x) {
+                return points[x].y;
+            });
+
+        data.push(
+            {
+                x: pointsArrayX,
+                y: pointsArrayY,
+                mode: 'markers',
+                type: 'scatter'
+            }
+        );
 
         var graphWidth = 1000,
             graphHeight = graphWidth * (plotXY[1][1] - plotXY[1][0]) / (plotXY[0][1] - plotXY[0][0]);
