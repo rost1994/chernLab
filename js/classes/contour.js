@@ -57,6 +57,17 @@ var Contour = function () {
     };
 
     /**
+     * @param xyBeg Object
+     * @return {Function}
+     */
+    this.getBorderIntersectCallback = function (xyBeg) {
+        return function (pointOld, pointNew) {
+            // TODO: implement borderIntersectCallback
+            return pointNew;
+        };
+    };
+
+    /**
      * Fill _points and _discretePoints arrays
      * @param p - {float, float} - center
      * @private

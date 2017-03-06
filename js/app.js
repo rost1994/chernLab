@@ -1,23 +1,34 @@
-
-
 $(function () {
     var n,
-        plotXY = [[], []],
+        plotXY = [
+            {
+                x: 0,
+                y: 0
+            },
+            {
+                x: 1,
+                y: 1
+            }
+        ],
         a,
         alpha,
         delta,
         radius,
-        p;
+        p,
+        solution = $('#solution'),
+        graph = $('#graph'),
+        contour = new Contour(),
+        method = new Method();
 
     $('#eval').click(function () {
-        $('#solution').show();
-        $('#graph').html('');
+        solution.hide();
+        graph.html('');
 
         n = parseInt($('#n-count').val());
-        plotXY[0][0] = parseFloat($('#a-x').val());
-        plotXY[0][1] = parseFloat($('#b-x').val());
-        plotXY[1][0] = parseFloat($('#a-y').val());
-        plotXY[1][1] = parseFloat($('#b-y').val());
+        plotXY[0].x = parseFloat($('#a-x').val());
+        plotXY[0].y = parseFloat($('#a-y').val());
+        plotXY[1].x = parseFloat($('#b-x').val());
+        plotXY[1].y = parseFloat($('#b-y').val());
         a = parseFloat($('#model-a').val());
         alpha = parseFloat($('#model-alpha').val());
         delta = parseFloat($('#model-delta').val());
@@ -27,56 +38,82 @@ $(function () {
             y: parseFloat($('#contour-y').val())
         };
 
-        var contour = new Contour();
         contour.initialize(a, alpha, delta, radius, n, p);
-
-        var points = contour.getPoints(),
-            discretePoints = contour.getDiscretePoints(),
-            espilon = contour.getEpsilon();
-
-        var xPoints = [],
-            yPoints = [];
-
-        for (var i = 0; i < points.length; ++i) {
-            xPoints.push(points[i].x);
-            yPoints.push(points[i].y);
-        }
-
-        var data = [
-            {
-                x: xPoints,
-                y: yPoints,
-                type: 'scatter'
-            }
-        ];
-
-        var pointsArrayX = discretePoints.map(function (x) {
-                return points[x].x;
-            }),
-            pointsArrayY = discretePoints.map(function (x) {
-                return points[x].y;
-            });
-
-        data.push(
-            {
-                x: pointsArrayX,
-                y: pointsArrayY,
-                mode: 'markers',
-                type: 'scatter'
-            }
+        method.initialize(
+            contour.getPoints(),
+            contour.getDiscretePoints(),
+            contour.getEpsilon(),
+            contour.getBorderIntersectCallback(plotXY)
         );
+        method.evaluate();
 
-        var graphWidth = 1000,
-            graphHeight = graphWidth * (plotXY[1][1] - plotXY[1][0]) / (plotXY[0][1] - plotXY[0][0]);
+        solution.show();
 
-        var layout = {
-            showlegend: true,
-            xaxis: {range: [plotXY[0][0], plotXY[0][1]]},
-            yaxis: {range: [plotXY[1][0], plotXY[1][1]]},
-            width: graphWidth,
-            height: graphHeight
-        };
-
-        Plotly.newPlot('graph', data, layout);
+        $('.view').click(viewControl);
     });
+
+    $('#next').click(function () {
+        solution.hide();
+        graph.html('');
+
+        afterView();
+        method.evaluate();
+        solution.show();
+
+        viewCallback();
+    })
 });
+
+/**
+ * Draws contour
+ * @param contour {Contour}
+ */
+var drawContour = function (contour) {
+    var points = contour.getPoints(),
+        discretePoints = contour.getDiscretePoints();
+
+    var xPoints = [],
+        yPoints = [];
+
+    for (var i = 0; i < points.length; ++i) {
+        xPoints.push(points[i].x);
+        yPoints.push(points[i].y);
+    }
+
+    var data = [
+        {
+            x: xPoints,
+            y: yPoints,
+            type: 'scatter'
+        }
+    ];
+
+    var pointsArrayX = discretePoints.map(function (x) {
+            return points[x].x;
+        }),
+        pointsArrayY = discretePoints.map(function (x) {
+            return points[x].y;
+        });
+
+    data.push(
+        {
+            x: pointsArrayX,
+            y: pointsArrayY,
+            mode: 'markers',
+            type: 'scatter'
+        }
+    );
+
+    var graphWidth = 1000,
+        graphHeight = graphWidth * (plotXY[1].y - plotXY[0].y) / (plotXY[1].x - plotXY[0].x);
+
+    var layout = {
+        showlegend: true,
+        xaxis: {range: [plotXY[0].x, plotXY[1].x]},
+        yaxis: {range: [plotXY[0].y, plotXY[1].y]},
+        width: graphWidth,
+        height: graphHeight
+    };
+
+    Plotly.newPlot('graph', data, layout);
+};
