@@ -10,7 +10,8 @@ var Contour = function () {
         _n,
         _points = [],
         _discretePoints = [],
-        _eps = 0;
+        _eps = 0,
+        _correctBorderIntersect;
 
     /**
      * Initialize Contour with given lengths
@@ -57,14 +58,12 @@ var Contour = function () {
     };
 
     /**
-     * @param xyBeg Object
+     * @param pointOld Object
+     * @param pointNew Object
      * @return {Function}
      */
-    this.getBorderIntersectCallback = function (xyBeg) {
-        return function (pointOld, pointNew) {
-            // TODO: implement borderIntersectCallback
-            return pointNew;
-        };
+    this.correctBorderIntersectCallback = function (pointOld, pointNew) {
+        return _correctBorderIntersect(pointOld, pointNew);
     };
 
     /**
@@ -121,11 +120,9 @@ var Contour = function () {
             y0 = p.y - _delta - _radius;
 
         for (i = Math.PI / 2 + _alpha + angleStep; i <= 2.5 * Math.PI; i += angleStep) {
-            var tempX = _radius * Math.cos(i),
-                tempY = _radius * Math.sin(i);
             _points.push({
-                x: x0 + tempX,
-                y: y0 + tempY
+                x: x0 + _radius * Math.cos(i),
+                y: y0 + _radius * Math.sin(i)
             });
         }
         _points[_points.length - 1] = {
@@ -136,6 +133,88 @@ var Contour = function () {
         _discretePoints.push(_points.length - 1);
 
         _eps = _processEpsilon(epsilonIndexStart) / 2;
+
+        _correctBorderIntersect = function (pointOld, pointNew) {
+            var middlePointX = (pointOld.x + pointNew.x) / 2,
+                middlePointY = (pointOld.y + pointNew.y) / 2,
+                delta = _eps + 0.001;
+
+            // for contour '|' side
+            var segment1 = {
+                start: _points[_discretePoints[1]],
+                end: _points[_discretePoints[2]]
+            };
+            if ((middlePointY > segment1.end.y) && (middlePointY < segment1.start.y)) {
+                if (((pointNew.x > segment1.start.x) && (pointOld.x < segment1.start.x))
+                    || ((pointNew.x < segment1.start.x) && (pointOld.x > segment1.start.x))) {
+
+                    pointNew.x = segment1.start.x - (pointNew.x - pointOld.x);
+                }
+            }
+
+            // for contour '_' and '-'
+            var segment2 = {
+                    start: _points[_discretePoints[1]],
+                    end: _points[_discretePoints[0]]
+                },
+                segment3 = {
+                    start: _points[_discretePoints[2]],
+                    end: _points[_discretePoints[3]]
+                };
+            if ((middlePointX > segment2.start.x) && (middlePointX < segment2.end.y)) {
+                if (((pointNew.y > segment2.start.y) && (pointOld.y < segment2.start.y))
+                    || ((pointNew.y < segment2.start.y) && (pointOld.y > segment2.start.y))) {
+
+                    pointNew.y = segment2.start.y - (pointNew.y - pointOld.y);
+                }
+
+                if (((pointNew.y > segment3.start.y) && (pointOld.y < segment3.start.y))
+                    || ((pointNew.y < segment3.start.y) && (pointOld.y > segment3.start.y))) {
+
+                    pointNew.y = segment3.start.y - (pointNew.y - pointOld.y);
+                }
+            }
+
+            var inStripCheck = function (pointIn, pointOther, coordIntersect, coordBeg, coordEnd) {
+                    return (pointIn > (coordIntersect - delta)) &&
+                        (pointIn < (coordIntersect + delta)) &&
+                        (pointOther > coordBeg) &&
+                        (pointOther < coordEnd);
+                },
+                correctStripIntersect = function (pointOldCoord, coordInterset, invert) {
+                    if (pointOldCoord < coordInterset) {
+                        return coordInterset - delta;
+                    } else if (pointOldCoord > coordInterset) {
+                        return coordInterset + delta;
+                    } else if (pointOldCoord === coordInterset) {
+                        return invert ? coordInterset - delta : coordInterset + delta;
+                    }
+                };
+
+            if (inStripCheck(pointNew.x, pointNew.y, segment1.start.x, segment1.start.y, segment1.end.y)) {
+                pointNew.x = correctStripIntersect(pointOld.x, segment1.start.x, false);
+            } else if (inStripCheck(pointNew.y, pointNew.x, segment2.start.y, segment2.start.x, segment2.end.x)) {
+                pointNew.y = correctStripIntersect(pointOld.y, segment2.start.y, false);
+            } else if (inStripCheck(pointNew.y, pointNew.x, segment3.start.y, segment2.start.x, segment2.end.x)) {
+                pointNew.y = correctStripIntersect(pointOld.y, segment3.start.y, true);
+            }
+
+            // for contour 'C'
+            if (pointNew.x < x0 && pointNew.y > y0) {
+                // TODO: ADD IN STRIP CHECK
+                if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))
+                    && ((Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius, 2))) {
+                    var catheter = Math.abs(y0 - pointNew.y),
+                        hypotenuse = Math.sqrt(Math.pow(y0 - pointNew.y, 2) + Math.pow(x0 - pointNew.x, 2)),
+                        angle = Math.PI - Math.asin(catheter / hypotenuse);
+
+                    if ((angle > Math.PI / 2) && (angle < Math.PI / 2 + _alpha)) {
+                        pointNew.x = x0 + (_radius - delta) * Math.cos(angle);
+                        pointNew.y = y0 + (_radius - delta) * Math.sin(angle);
+                    }
+                }
+            }
+        }
     };
 
     /**

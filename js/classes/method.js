@@ -22,8 +22,8 @@ var Method = function () {
         _eps = 0,
         _xy,
         _borderIntersectCallback,
-        _leftSide,
-        _rightSide;
+        _leftSide = [],
+        _rightSide = [];
 
     /**
      * @param xy0 Object[]
@@ -62,7 +62,7 @@ var Method = function () {
         _processGammaWCoordinates();
 
         // Let's get matrix of left sides and array of right sides:
-        if (leftSide.length === 0) {
+        if (_leftSide.length === 0) {
             _getLeftSide();
         }
 
@@ -196,7 +196,7 @@ var Method = function () {
             for (j = 0; j < _xy0.length; ++j) {
                 var xyTemp = _xy(i),
                     vTemp = _speedVector(j, xyTemp.x, xyTemp.y);
-                leftSide[i][j] = vTemp.x * normalTemp.x + vTemp.y * normalTemp.y;
+                _leftSide[i][j] = vTemp.x * normalTemp.x + vTemp.y * normalTemp.y;
             }
         }
 
@@ -218,7 +218,7 @@ var Method = function () {
             var normalTemp = _normal(i);
             // rightSide[i] = -(vInf[0] * normalTemp[0] + vInf[1] * normalTemp[1]);
             // TODO: VInf was there
-            rightSide[i] = -(normalTemp.x + normalTemp.y);
+            _rightSide[i] = -(normalTemp.x + normalTemp.y);
 
             for (j = 0; j < _gammaW.length; ++j) {
                 var vectorW = _speedVectorW(j, _xy0[i].x, _xy0[i].y);

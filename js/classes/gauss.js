@@ -2,11 +2,11 @@ function Gauss(A, b) {
     this.A = $.extend(true, {}, A);
     this.b = $.extend(true, {}, b);
     this.solve = function () {
-        var mas = new Array();
+        var mas = [];
         //Корни системы
-        var x = new Array();
+        var x = [];
         //Отвечает за порядок корней
-        var otv = new Array();
+        var otv = [];
         var i, j, k;
         var n = b.length;
         //Сначала все корни по порядку
@@ -14,7 +14,7 @@ function Gauss(A, b) {
             otv[i] = i;
         //Сливаем главную матрицу и правые части в один массив
         for (i = 0; i < n; i++) {
-            mas[i] = new Array();
+            mas[i] = [];
             for (j = 0; j < n; j++) {
                 mas[i][j] = this.A[i][j];
             }
