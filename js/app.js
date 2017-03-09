@@ -43,7 +43,7 @@ $(function () {
             contour.getPoints(),
             contour.getDiscretePoints(),
             contour.getEpsilon(),
-            contour.getBorderIntersectCallback(plotXY)
+            contour.correctBorderIntersectCallback
         );
         method.evaluate();
 
