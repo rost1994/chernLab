@@ -8,9 +8,13 @@ var Method = function () {
      *  @param _xyAngular int[] - array of indexes for angular initial points for contour
      *  @param _xyGammaW [{float, float}[][]] - array of moved angular initial points for contour
      *  @param _eps float - max distance for neighbors points of contour
-     *  @param _borderIntersectCallback closure -  function that "returns" point inside contour or "move" to some distance
+     *  @param _borderIntersectCallback closure -  function that "returns" point
+     *  inside contour or "move" to some distance
      *  @param _leftSide float[][] - matrix of system's right sides
      *  @param _rightSide float[] - array of system's left sides
+     *  @param _gammaInf float - circulation (some number from begin conditions)
+     *  @param _vWhistle {float, float} - initial speed of whistle (some number from begin conditions)
+     *  @param _whistleIndexes integer[] - indexes of whistle
      */
     var _t = 0,
         _tStep = 0.1,
@@ -23,18 +27,30 @@ var Method = function () {
         _xy,
         _borderIntersectCallback,
         _leftSide = [],
-        _rightSide = [];
+        _rightSide = [],
+        _gammaInf = 0,
+        _vWhistle = {
+            x: 0,
+            y: 0
+        },
+        _whistleIndexes = [];
 
     /**
      * @param xy0 Object[]
      * @param xyAngular int[]
      * @param eps float
+     * @param gammaInf float
+     * @param vWhistle object
+     * @param whistleIndexes integer[]
      * @param borderIntersectCallback closure
      */
-    this.initialize = function (xy0, xyAngular, eps, borderIntersectCallback) {
+    this.initialize = function (xy0, xyAngular, eps, gammaInf, vWhistle, whistleIndexes, borderIntersectCallback) {
         _xy0 = xy0;
         _xyAngular = xyAngular;
         _eps = eps;
+        _gammaInf = gammaInf || _gammaInf;
+        _vWhistle = vWhistle;
+        _whistleIndexes = whistleIndexes;
         _borderIntersectCallback = borderIntersectCallback;
 
         _xy = function (index) {
@@ -73,6 +89,54 @@ var Method = function () {
     };
 
     /**
+     * Return array of speed.
+     * @param xyCoord object
+     * @param step float
+     * @return {[float,float,float]}
+     */
+    this.getSpeed = function(xyCoord, step) {
+        var result = [
+            [],
+            [],
+            []
+        ];
+
+        for (var i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
+            for (var j = xyCoord[0].y + step / 2; j < xyCoord[1].y; j = j + step) {
+                var z = _getPointSpeed(i, j);
+
+                result[0].push(i);
+                result[1].push(j);
+                result[2].push(z);
+            }
+        }
+
+        return result;
+    };
+
+    /**
+     * Return array of speed.
+     * @param xyCoord object
+     * @return {[float,float]}
+     */
+    this.getVortex = function (xyCoord) {
+        var result = [
+            [],
+            []
+        ];
+
+        for (var i = 0; i < _xyGammaW.length; ++i) {
+            if (((_xyGammaW[i].x >= xyCoord[0].x) && (_xyGammaW[i].x <= xyCoord[1].x))
+                && ((_xyGammaW[i].y >= xyCoord[0].y) && (_xyGammaW[i].y <= xyCoord[1].y))) {
+                result[0].push(_xyGammaW[i].x);
+                result[1].push(_xyGammaW[i].y);
+            }
+        }
+
+        return result;
+    };
+
+    /**
      *  normal(x{k}, y{k})
      *  @param index int
      *  @return Object
@@ -82,11 +146,11 @@ var Method = function () {
         var xy0k = _xy0[index],
             xy0k1 = _xy0[index + 1];
 
-        var divisor = Math.sqrt(Math.pow((xy0k1[0] - xy0k[0]), 2) + Math.pow((xy0k1[1] - xy0k[1]), 2));
+        var divisor = Math.sqrt(Math.pow((xy0k1.x - xy0k.x), 2) + Math.pow((xy0k1.y - xy0k.y), 2));
 
         return {
-            x: -(xy0k1[1] - xy0k[1]) / divisor,
-            y: (xy0k1[0] - xy0k[0]) / divisor
+            x: -(xy0k1.y - xy0k.y) / divisor,
+            y: (xy0k1.x - xy0k.x) / divisor
         };
     };
 
@@ -96,6 +160,7 @@ var Method = function () {
      *  @param x float
      *  @param y float
      *  @return Object
+     *  @private
      */
     var _speedVector = function (indexGamma, x, y) {
         var divisor = Math.max(
@@ -140,11 +205,11 @@ var Method = function () {
             var vT = _getPointSpeed(_xyGammaW[i].x, _xyGammaW[i].y);
 
             var xyGammaTemp = [
-                xyGammaW[i].x + _tStep * vT.x,
-                xyGammaW[i].y + _tStep * vT.y
+                _xyGammaW[i].x + _tStep * vT.x,
+                _xyGammaW[i].y + _tStep * vT.y
             ];
 
-            xyGammaW[i] = _borderIntersectCallback(xyGammaW[i], xyGammaTemp);
+            _xyGammaW[i] = _borderIntersectCallback(_xyGammaW[i], xyGammaTemp);
         }
     };
 
@@ -168,14 +233,20 @@ var Method = function () {
 
         for (var k = 0; k < _gamma.length; ++k) {
             temp = _speedVector(k, x, y);
-            z.x += temp.x * gamma[k];
-            z.y += temp.y * gamma[k];
+
+            if (_whistleIndexes.indexOf(k) !== -1) {
+                temp.x += _vWhistle.x;
+                temp.y += _vWhistle.y;
+            }
+
+            z.x += temp.x * _gamma[k];
+            z.y += temp.y * _gamma[k];
         }
 
         for (k = 0; k < _gammaW.length; ++k) {
             temp = _speedVectorW(k, x, y);
-            z.x += temp.x * gammaW[k];
-            z.y += temp.y * gammaW[k];
+            z.x += temp.x * _gammaW[k];
+            z.y += temp.y * _gammaW[k];
         }
 
         return z;
@@ -216,9 +287,17 @@ var Method = function () {
 
         for (var i = 0; i < _xy0.length - 1; ++i) {
             var normalTemp = _normal(i);
-            // rightSide[i] = -(vInf[0] * normalTemp[0] + vInf[1] * normalTemp[1]);
             // TODO: VInf was there
-            _rightSide[i] = -(normalTemp.x + normalTemp.y);
+            // rightSide[i] = -(vInf[0] * normalTemp[0] + vInf[1] * normalTemp[1]);
+            _rightSide[i] = 0;
+            for (j = 0; j < _whistleIndexes.length; ++j) {
+                var vectorV = _speedVector(_whistleIndexes[j], _xy0[i].x, _xy0[i].y),
+                    gammaTemp = _gamma[j] || 0;
+
+                _rightSide[i] -= gammaTemp * (
+                        (vectorV.x + _vWhistle.x) * normalTemp.x + (vectorV.y + _vWhistle.y) * normalTemp.y
+                    );
+            }
 
             for (j = 0; j < _gammaW.length; ++j) {
                 var vectorW = _speedVectorW(j, _xy0[i].x, _xy0[i].y);
@@ -227,8 +306,7 @@ var Method = function () {
         }
 
         // TODO: gammaInf was there
-        // _rightSide[_xy0.length - 1] = gammaInf;
-        _rightSide[_xy0.length - 1] = 0;
+        _rightSide[_xy0.length - 1] = _gammaInf;
         for (j = 0; j < _gammaW.length; ++j) {
             _rightSide[_xy0.length - 1] -= _gammaW[j];
         }
@@ -246,7 +324,7 @@ var Method = function () {
         }
 
         angularSpeed.forEach(function (item, index, array) {
-            array[index] = Math.sqrt(Math.pow(item[0], 2) + Math.pow(item[1], 2));
+            array[index] = Math.sqrt(Math.pow(item.x, 2) + Math.pow(item.y, 2));
         });
 
         var maxSpeed = Math.max.apply(Math, angularSpeed);

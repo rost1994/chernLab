@@ -11,7 +11,8 @@ var Contour = function () {
         _points = [],
         _discretePoints = [],
         _eps = 0,
-        _correctBorderIntersect;
+        _correctBorderIntersect,
+        _whistleIndexes = [];
 
     /**
      * Initialize Contour with given lengths
@@ -58,6 +59,14 @@ var Contour = function () {
     };
 
     /**
+     * Return whistle indexes
+     * @return integer[]
+     */
+    this.getWhistleIndexes = function () {
+        return _whistleIndexes;
+    };
+
+    /**
      * @param pointOld Object
      * @param pointNew Object
      * @return {Function}
@@ -78,7 +87,7 @@ var Contour = function () {
         var segmentLength = _radius * (2 * Math.PI - _alpha),
             length = 2 * _a + _b + segmentLength,
             hordX = Math.sqrt(hordSquare - Math.pow((_b - _delta), 2)),
-            step = length / _n;
+            step = length / (_n - 1);
 
         var i;
 
@@ -97,8 +106,10 @@ var Contour = function () {
                 x: p.x,
                 y: i
             });
+            _whistleIndexes.push(_points.length - 1);
         }
         _points[_points.length - 1].y = p.y - _b;
+        _whistleIndexes.splice(_points.length - 1, 1);
 
         _discretePoints.push(_points.length - 1);
 
