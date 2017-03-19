@@ -28,6 +28,7 @@ $(function () {
         renderEpsilon = 1;
 
     $('#eval').click(function () {
+        $(this).hide();
         solution.hide();
         graph.html('');
 
@@ -47,7 +48,7 @@ $(function () {
             x: parseFloat($('#contour-x').val()),
             y: parseFloat($('#contour-y').val())
         };
-        renderEpsilon = (plotXY[1].y - plotXY[0].y) / 10;
+        renderEpsilon = (plotXY[1].y - plotXY[0].y) / 20;
 
         contour.initialize(a, alpha, delta, radius, n, p);
         method.initialize(
@@ -86,15 +87,15 @@ $(function () {
 
                 var shapes = [];
 
-                for (i = 0; i < speedData.length; ++i) {
+                for (i = 0; i < speedData[0].length; ++i) {
                     //var divider = Math.sqrt(Math.pow(speedData[2][i].x, 2) + Math.pow(speedData[2][i].y, 2)),
                     shapes.push(
                         {
                             type: 'line',
                             x0: speedData[0][i],
                             y0: speedData[1][i],
-                            x1: speedData[2][i].x,
-                            y1: speedData[2][i].y,
+                            x1: speedData[0][i] + speedData[2][i].x,
+                            y1: speedData[1][i] + speedData[2][i].y,
                             line: {
                                 color: 'rgb(55, 128, 191)'
                             }

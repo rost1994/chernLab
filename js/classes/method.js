@@ -16,7 +16,7 @@ var Method = function () {
      *  @param _vWhistle {float, float} - initial speed of whistle (some number from begin conditions)
      *  @param _whistleIndexes integer[] - indexes of whistle
      */
-    var _t = 0,
+    var _t = false,
         _tStep = 0.1,
         _gamma = [],
         _gammaW = [],
@@ -70,8 +70,10 @@ var Method = function () {
      */
     this.evaluate = function () {
         // Calculate tStep, fill gammaW, etc.
-        if (_t !== 0) {
+        if (_t !== false) {
             _dataPrepare();
+        } else {
+            _t = 0;
         }
 
         // Let's recalculate coordinates of gammaW points
@@ -96,14 +98,23 @@ var Method = function () {
      */
     this.getSpeed = function(xyCoord, step) {
         var result = [
-            [],
-            [],
-            []
-        ];
+                [],
+                [],
+                []
+            ],
+            zLength = [],
+            i;
 
-        for (var i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
+        var zMax = 0;
+        for (i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
             for (var j = xyCoord[0].y + step / 2; j < xyCoord[1].y; j = j + step) {
                 var z = _getPointSpeed(i, j);
+
+                zLength.push(Math.sqrt(Math.pow(z.x, 2) + Math.pow(z.y, 2)));
+
+                if (zLength[zLength.length - 1] > zMax) {
+                    zMax = zLength[zLength.length - 1];
+                }
 
                 result[0].push(i);
                 result[1].push(j);
@@ -111,6 +122,32 @@ var Method = function () {
             }
         }
 
+        for (i = 0; i < result[2].length; ++i) {
+            var k = Math.sqrt(Math.pow(result[2][i].x, 2) + Math.pow(result[2][i].y, 2)) * zMax / (zLength[i] * step);
+            result[2][i].x /= k;
+            result[2][i].y /= k;
+        }
+
+        return result;
+    };
+
+    // For debugging
+    this.getNormales = function () {
+        var result = [];
+        for (var i = 0; i < _xy0.length - 1; ++i) {
+            var norm = _normal(i);
+
+            result.push({
+                type: 'line',
+                x0: _xy(i).x,
+                y0: _xy(i).y,
+                x1: _xy(i).x + norm.x * 0.25,
+                y1: _xy(i).y + norm.y * 0.25,
+                line: {
+                    color: 'rgb(0, 0, 20)'
+                }
+            });
+        }
         return result;
     };
 
@@ -201,13 +238,19 @@ var Method = function () {
      * @private
      */
     var _processGammaWCoordinates = function () {
-        for (var i = 0; i < _gammaW.length; ++i) {
-            var vT = _getPointSpeed(_xyGammaW[i].x, _xyGammaW[i].y);
+        var vT = [],
+            i;
 
-            var xyGammaTemp = [
-                _xyGammaW[i].x + _tStep * vT.x,
-                _xyGammaW[i].y + _tStep * vT.y
-            ];
+        for (i = 0; i < _gammaW.length; ++i) {
+            vT[i] = _getPointSpeed(_xyGammaW[i].x, _xyGammaW[i].y);
+        }
+
+        for (i = 0; i < _gammaW.length; ++i) {
+
+            var xyGammaTemp = {
+                x: _xyGammaW[i].x + _tStep * vT[i].x,
+                y: _xyGammaW[i].y + _tStep * vT[i].y
+            };
 
             _xyGammaW[i] = _borderIntersectCallback(_xyGammaW[i], xyGammaTemp);
         }
@@ -234,11 +277,6 @@ var Method = function () {
         for (var k = 0; k < _gamma.length; ++k) {
             temp = _speedVector(k, x, y);
 
-            if (_whistleIndexes.indexOf(k) !== -1) {
-                temp.x += _vWhistle.x;
-                temp.y += _vWhistle.y;
-            }
-
             z.x += temp.x * _gamma[k];
             z.y += temp.y * _gamma[k];
         }
@@ -261,12 +299,12 @@ var Method = function () {
         _leftSide = [];
 
         for (var i = 0; i < _xy0.length - 1; ++i) {
-            var normalTemp = _normal(i);
+            var normalTemp = _normal(i),
+                xyTemp = _xy(i);
             _leftSide[i] = [];
 
             for (j = 0; j < _xy0.length; ++j) {
-                var xyTemp = _xy(i),
-                    vTemp = _speedVector(j, xyTemp.x, xyTemp.y);
+                var vTemp = _speedVector(j, xyTemp.x, xyTemp.y);
                 _leftSide[i][j] = vTemp.x * normalTemp.x + vTemp.y * normalTemp.y;
             }
         }
@@ -290,13 +328,8 @@ var Method = function () {
             // TODO: VInf was there
             // rightSide[i] = -(vInf[0] * normalTemp[0] + vInf[1] * normalTemp[1]);
             _rightSide[i] = 0;
-            for (j = 0; j < _whistleIndexes.length; ++j) {
-                var vectorV = _speedVector(_whistleIndexes[j], _xy0[i].x, _xy0[i].y),
-                    gammaTemp = _gamma[j] || 0;
-
-                _rightSide[i] -= gammaTemp * (
-                        (vectorV.x + _vWhistle.x) * normalTemp.x + (vectorV.y + _vWhistle.y) * normalTemp.y
-                    );
+            if (_whistleIndexes.indexOf(i) !== -1) {
+                _rightSide[i] -= (_vWhistle.x) * normalTemp.x + (_vWhistle.y) * normalTemp.y;
             }
 
             for (j = 0; j < _gammaW.length; ++j) {

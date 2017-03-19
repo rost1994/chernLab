@@ -101,6 +101,7 @@ var Contour = function () {
 
         _discretePoints.push(0, _points.length - 1);
 
+        _whistleIndexes.push(_points.length - 1);
         for (i = p.y + - step; i >= p.y - _b; i -= step) {
             _points.push({
                 x: p.x,
@@ -109,7 +110,7 @@ var Contour = function () {
             _whistleIndexes.push(_points.length - 1);
         }
         _points[_points.length - 1].y = p.y - _b;
-        _whistleIndexes.splice(_points.length - 1, 1);
+        _whistleIndexes.splice(_whistleIndexes.length - 1, 1);
 
         _discretePoints.push(_points.length - 1);
 
@@ -216,7 +217,7 @@ var Contour = function () {
                     hypotenuse = Math.sqrt(Math.pow(y0 - pointNew.y, 2) + Math.pow(x0 - pointNew.x, 2)),
                     angle = Math.PI - Math.asin(catheter / hypotenuse);
 
-                if ((angle > Math.PI / 2) && (angle < Math.PI / 2 + _alpha)) {
+                if (!((angle > Math.PI / 2) && (angle < Math.PI / 2 + _alpha))) {
                     var newRadius;
                     if (inContour) {
                         newRadius = _radius - _eps;
@@ -229,24 +230,24 @@ var Contour = function () {
                 }
             };
 
-            if (pointNew.x < x0 && pointNew.y > y0) {
-                if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))
-                    && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius, 2))) {
-                    inAngleCorrect(true);
-                } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius, 2))
-                    && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius, 2))) {
-                    inAngleCorrect(false);
-                }
-
-                // In strip check
-                if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius - delta, 2))
-                    && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius - delta, 2))) {
-                    inAngleCorrect(true);
-                } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius + delta, 2))
-                    && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius + delta, 2))) {
-                    inAngleCorrect(false);
-                }
+            if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius, 2))) {
+                inAngleCorrect(true);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius, 2))) {
+                inAngleCorrect(false);
             }
+
+            // In strip check
+            if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius - delta, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius - delta, 2))) {
+                inAngleCorrect(true);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius + delta, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius + delta, 2))) {
+                inAngleCorrect(false);
+            }
+
+            return pointNew;
         }
     };
 
