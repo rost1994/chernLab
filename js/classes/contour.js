@@ -51,6 +51,23 @@ var Contour = function () {
     };
 
     /**
+     * @return int[]
+     */
+    this.getWindDiscretePoints = function () {
+        var discTemp = JSON.parse(JSON.stringify(_discretePoints)),
+            ret = [];
+
+        for (var i = 0; i < discTemp.length; ++i) {
+            if (i === 1 || i === 2) {
+                continue;
+            }
+            ret.push(discTemp[i]);
+        }
+
+        return ret;
+    };
+
+    /**
      * Return epsilon
      * @return {number}
      */
@@ -213,16 +230,39 @@ var Contour = function () {
 
             // for contour 'C'
             var inAngleCorrect = function (inContour) {
-                var catheter = Math.abs(y0 - pointNew.y),
-                    hypotenuse = Math.sqrt(Math.pow(y0 - pointNew.y, 2) + Math.pow(x0 - pointNew.x, 2)),
-                    angle = Math.PI - Math.asin(catheter / hypotenuse);
+                var angle,
+                    pointDeltaTemp = {
+                        x: pointNew.x - x0,
+                        y: pointNew.y - y0
+                    };
+                if (pointNew.x > x0) {
+                    if (pointNew.y >= y0) {
+                        angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x);
+                    } else {
+                        angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + 2 * Math.PI;
+                    }
+                } else if (pointNew.x < x0) {
+                    angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + Math.PI;
+                } else {
+                    if (pointNew.y > y0) {
+                        angle = Math.PI / 2;
+                    } else if (pointNew.y < y0) {
+                        angle = 3 * Math.PI / 2;
+                    } else {
+                        throw new Error('Point in circle center!');
+                    }
+                }
 
-                if (!((angle > Math.PI / 2) && (angle < Math.PI / 2 + _alpha))) {
+                if (angle > 2 * Math.PI || angle < 0) {
+                    throw new Error('Circle angle computing error');
+                }
+
+                if ((angle < Math.PI / 2) || (angle > Math.PI / 2 + _alpha)) {
                     var newRadius;
                     if (inContour) {
-                        newRadius = _radius - _eps;
+                        newRadius = _radius - delta;
                     } else {
-                        newRadius = _radius + _eps;
+                        newRadius = _radius + delta;
                     }
 
                     pointNew.x = x0 + newRadius * Math.cos(angle);
@@ -230,20 +270,24 @@ var Contour = function () {
                 }
             };
 
-            if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))
-                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius, 2))) {
-                inAngleCorrect(true);
-            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius, 2))
-                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius, 2))) {
-                inAngleCorrect(false);
-            }
-
             // In strip check
             if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius - delta, 2))
                 && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius - delta, 2))) {
                 inAngleCorrect(true);
             } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius + delta, 2))
                 && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius + delta, 2))) {
+                inAngleCorrect(false);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) < Math.pow(_radius, 2))) {
+                inAngleCorrect(true);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius, 2))
+                && (Math.pow(x0 - pointOld.x, 2) + Math.pow(y0 - pointOld.y, 2) > Math.pow(_radius, 2))) {
+                inAngleCorrect(false);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius - delta, 2))
+                && (Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius, 2))) {
+                inAngleCorrect(true);
+            } else if ((Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) < Math.pow(_radius + delta, 2))
+                && (Math.pow(x0 - pointNew.x, 2) + Math.pow(y0 - pointNew.y, 2) > Math.pow(_radius, 2))) {
                 inAngleCorrect(false);
             }
 

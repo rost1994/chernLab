@@ -48,12 +48,12 @@ $(function () {
             x: parseFloat($('#contour-x').val()),
             y: parseFloat($('#contour-y').val())
         };
-        renderEpsilon = (plotXY[1].y - plotXY[0].y) / 20;
+        renderEpsilon = (plotXY[1].y - plotXY[0].y) / 60;
 
         contour.initialize(a, alpha, delta, radius, n, p);
         method.initialize(
             contour.getPoints(),
-            contour.getDiscretePoints(),
+            contour.getWindDiscretePoints(),
             contour.getEpsilon(),
             gammaInf,
             vWhistle,
@@ -65,6 +65,23 @@ $(function () {
         solution.show();
 
         $('.view').click(viewControl);
+    });
+
+    $('#auto').click(function () {
+       $('#next').hide();
+       var doFun = function () {
+           solution.hide();
+           graph.html('');
+
+           method.evaluate();
+           solution.show();
+
+           viewCallback();
+           document.getElementById('graph').on('plotly_afterplot', function() {
+               setTimeout(doFun, 10);
+           });
+       };
+       doFun();
     });
 
     $('#next').click(function () {
@@ -85,10 +102,11 @@ $(function () {
                     vortexData = method.getVortex(plotXY),
                     i;
 
-                var shapes = [];
+                var shapes = [];//method.getNormales();
 
                 for (i = 0; i < speedData[0].length; ++i) {
                     //var divider = Math.sqrt(Math.pow(speedData[2][i].x, 2) + Math.pow(speedData[2][i].y, 2)),
+                    if (Math.sqrt(Math.pow(speedData[2][i].x, 2)+Math.pow(speedData[2][i].y, 2)) < 0.1) continue;
                     shapes.push(
                         {
                             type: 'line',
@@ -102,6 +120,30 @@ $(function () {
                         }
                     );
                 }
+                //
+                // var xPoints = [],
+                //     yPoints = [],
+                //     sizes = [],
+                //     points = contour.getPoints();
+                //
+                // for (i = 0; i < points.length; ++i) {
+                //     xPoints.push(points[i].x);
+                //     yPoints.push(points[i].y);
+                //     sizes.push(contour.getEpsilon() * 200);
+                // }
+                //
+                // data.push(
+                //     {
+                //         x: xPoints,
+                //         y: yPoints,
+                //         mode: 'markers',
+                //         type: 'scatter',
+                //         marker: {
+                //             sizemode: 'diameter',
+                //             size: sizes
+                //         }
+                //     }
+                // );
 
                 data.push(
                     {

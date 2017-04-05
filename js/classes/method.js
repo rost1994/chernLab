@@ -329,7 +329,7 @@ var Method = function () {
             // rightSide[i] = -(vInf[0] * normalTemp[0] + vInf[1] * normalTemp[1]);
             _rightSide[i] = 0;
             if (_whistleIndexes.indexOf(i) !== -1) {
-                _rightSide[i] -= (_vWhistle.x) * normalTemp.x + (_vWhistle.y) * normalTemp.y;
+                _rightSide[i] += (_vWhistle.x) * normalTemp.x + (_vWhistle.y) * normalTemp.y;
             }
 
             for (j = 0; j < _gammaW.length; ++j) {
@@ -349,6 +349,14 @@ var Method = function () {
      * @private
      */
     var _dataPrepare = function () {
+        for (i = 0; i < _xyAngular.length; ++i) {
+            _gammaW.push(_gamma[_xyAngular[i]]);
+            _xyGammaW.push({
+                x: _xy0[_xyAngular[i]].x,
+                y: _xy0[_xyAngular[i]].y,
+            });
+        }
+
         var angularSpeed = [],
             i;
 
@@ -365,12 +373,5 @@ var Method = function () {
         _tStep = _eps / maxSpeed;
 
         _t += _tStep;
-        for (i = 0; i < _xyAngular.length; ++i) {
-            _gammaW.push(_gamma[_xyAngular[i]]);
-            _xyGammaW.push({
-                x: _xy0[_xyAngular[i]].x,
-                y: _xy0[_xyAngular[i]].y
-            });
-        }
     };
 };
