@@ -165,21 +165,7 @@ var Contour = function () {
 
         _correctBorderIntersect = function (pointOld, pointNew) {
             var middlePointX = (pointOld.x + pointNew.x) / 2,
-                middlePointY = (pointOld.y + pointNew.y) / 2,
-                delta = _eps + 0.001;
-
-            // for contour '|' side
-            var segment1 = {
-                start: _points[_discretePoints[1]],
-                end: _points[_discretePoints[2]]
-            };
-            if ((middlePointY > segment1.end.y) && (middlePointY < segment1.start.y)) {
-                if (((pointNew.x > segment1.start.x) && (pointOld.x < segment1.start.x))
-                    || ((pointNew.x < segment1.start.x) && (pointOld.x > segment1.start.x))) {
-
-                    pointNew.x = segment1.start.x - (pointNew.x - pointOld.x);
-                }
-            }
+                delta = _eps * 2 + 0.001;
 
             // for contour '_' and '-'
             var segment2 = {
@@ -190,13 +176,14 @@ var Contour = function () {
                     start: _points[_discretePoints[2]],
                     end: _points[_discretePoints[3]]
                 };
-            if ((middlePointX > segment2.start.x) && (middlePointX < segment2.end.y)) {
+            if ((middlePointX > segment2.start.x) && (middlePointX < segment2.end.x)) {
                 if (((pointNew.y > segment2.start.y) && (pointOld.y < segment2.start.y))
                     || ((pointNew.y < segment2.start.y) && (pointOld.y > segment2.start.y))) {
 
                     pointNew.y = segment2.start.y - (pointNew.y - pointOld.y);
                 }
-
+            }
+            if ((middlePointX > segment3.start.x) && (middlePointX < segment3.end.x)) {
                 if (((pointNew.y > segment3.start.y) && (pointOld.y < segment3.start.y))
                     || ((pointNew.y < segment3.start.y) && (pointOld.y > segment3.start.y))) {
 
@@ -220,9 +207,7 @@ var Contour = function () {
                     }
                 };
 
-            if (inStripCheck(pointNew.x, pointNew.y, segment1.start.x, segment1.start.y, segment1.end.y)) {
-                pointNew.x = correctStripIntersect(pointOld.x, segment1.start.x, false);
-            } else if (inStripCheck(pointNew.y, pointNew.x, segment2.start.y, segment2.start.x, segment2.end.x)) {
+            if (inStripCheck(pointNew.y, pointNew.x, segment2.start.y, segment2.start.x, segment2.end.x)) {
                 pointNew.y = correctStripIntersect(pointOld.y, segment2.start.y, false);
             } else if (inStripCheck(pointNew.y, pointNew.x, segment3.start.y, segment2.start.x, segment2.end.x)) {
                 pointNew.y = correctStripIntersect(pointOld.y, segment3.start.y, true);
@@ -230,32 +215,39 @@ var Contour = function () {
 
             // for contour 'C'
             var inAngleCorrect = function (inContour) {
-                var angle,
-                    pointDeltaTemp = {
-                        x: pointNew.x - x0,
-                        y: pointNew.y - y0
-                    };
-                if (pointNew.x > x0) {
-                    if (pointNew.y >= y0) {
-                        angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x);
-                    } else {
-                        angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + 2 * Math.PI;
-                    }
-                } else if (pointNew.x < x0) {
-                    angle = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + Math.PI;
-                } else {
-                    if (pointNew.y > y0) {
-                        angle = Math.PI / 2;
-                    } else if (pointNew.y < y0) {
-                        angle = 3 * Math.PI / 2;
-                    } else {
-                        throw new Error('Point in circle center!');
-                    }
-                }
+                var angleCalc = function (point) {
+                    var result = 0,
+                        pointDeltaTemp = {
+                            x: point.x - x0,
+                            y: point.y - y0
+                        };
 
-                if (angle > 2 * Math.PI || angle < 0) {
-                    throw new Error('Circle angle computing error');
-                }
+                    if (point.x > x0) {
+                        if (point.y >= y0) {
+                            result = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x);
+                        } else {
+                            result = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + 2 * Math.PI;
+                        }
+                    } else if (point.x < x0) {
+                        result = Math.atan(pointDeltaTemp.y / pointDeltaTemp.x) + Math.PI;
+                    } else {
+                        if (point.y > y0) {
+                            result = Math.PI / 2;
+                        } else if (point.y < y0) {
+                            result = 3 * Math.PI / 2;
+                        } else {
+                            throw new Error('Point in circle center!');
+                        }
+                    }
+
+                    if (result > 2 * Math.PI || angle < 0) {
+                        throw new Error('Circle angle computing error');
+                    }
+
+                    return result;
+                };
+                var angle = angleCalc(pointNew),
+                    angleOld = angleCalc(pointOld);
 
                 if ((angle < Math.PI / 2) || (angle > Math.PI / 2 + _alpha)) {
                     var newRadius;
@@ -265,8 +257,8 @@ var Contour = function () {
                         newRadius = _radius + delta;
                     }
 
-                    pointNew.x = x0 + newRadius * Math.cos(angle);
-                    pointNew.y = y0 + newRadius * Math.sin(angle);
+                    pointNew.x = x0 + newRadius * Math.cos(angleOld + 2 * (angle - angleOld));
+                    pointNew.y = y0 + newRadius * Math.sin(angleOld + 2 * (angle - angleOld));
                 }
             };
 
@@ -314,7 +306,7 @@ var Contour = function () {
             return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2));
         };
 
-        return Math.max(distance(point1, point2), distance(point2, point3), distance(point3, point1));
+        return Math.min(distance(point1, point2), distance(point2, point3), distance(point3, point1));
     };
 };
 

@@ -25,6 +25,7 @@ $(function () {
         contour = new Contour(),
         method = new Method(),
         viewCallback,
+        contoursNum = 25,
         renderEpsilon = 1;
 
     $('#eval').click(function () {
@@ -61,6 +62,7 @@ $(function () {
             contour.correctBorderIntersectCallback
         );
         method.evaluate();
+        method.dataPrepare();
 
         solution.show();
 
@@ -68,12 +70,16 @@ $(function () {
     });
 
     $('#auto').click(function () {
-       $('#next').hide();
+       $('#next, #condition').hide();
        var doFun = function () {
            solution.hide();
            graph.html('');
 
-           method.evaluate();
+           var nNext = parseInt($('#n-next').val());
+           for(var j = 0; j < nNext; ++j) {
+               method.evaluate();
+               method.dataPrepare();
+           }
            solution.show();
 
            viewCallback();
@@ -85,10 +91,16 @@ $(function () {
     });
 
     $('#next').click(function () {
+        // $('#condition').hide();
         solution.hide();
         graph.html('');
 
-        method.evaluate();
+        var nNext = parseInt($('#n-next').val());
+        for(var j = 0; j < nNext; ++j) {
+            method.evaluate();
+            method.dataPrepare();
+        }
+
         solution.show();
 
         viewCallback();
@@ -106,7 +118,7 @@ $(function () {
 
                 for (i = 0; i < speedData[0].length; ++i) {
                     //var divider = Math.sqrt(Math.pow(speedData[2][i].x, 2) + Math.pow(speedData[2][i].y, 2)),
-                    if (Math.sqrt(Math.pow(speedData[2][i].x, 2)+Math.pow(speedData[2][i].y, 2)) < 0.1) continue;
+                    if (Math.sqrt(Math.pow(speedData[2][i].x, 2)+Math.pow(speedData[2][i].y, 2)) < renderEpsilon * 0.1) continue;
                     shapes.push(
                         {
                             type: 'line',
@@ -120,18 +132,60 @@ $(function () {
                         }
                     );
                 }
-                //
-                // var xPoints = [],
-                //     yPoints = [],
-                //     sizes = [],
-                //     points = contour.getPoints();
-                //
-                // for (i = 0; i < points.length; ++i) {
-                //     xPoints.push(points[i].x);
-                //     yPoints.push(points[i].y);
-                //     sizes.push(contour.getEpsilon() * 200);
-                // }
-                //
+
+                var xPoints = [],
+                    yPoints = [],
+                    sizes = [],
+                    points = contour.getPoints();
+
+                for (i = 0; i < points.length; ++i) {
+                    xPoints.push(points[i].x);
+                    yPoints.push(points[i].y);
+                    sizes.push(contour.getEpsilon() * 2);
+                }
+
+                var resTest = {
+                    x: [],
+                    y: [],
+                    color: [],
+                    size:[]
+                };
+                // Just for testing
+                (function(){
+                    var colors = method.getGamma();
+                    for(var ind = 0; ind < points.length; ++ ind) {
+                        resTest.x.push(points[ind].x);
+                        resTest.y.push(points[ind].y);
+                        resTest.color.push(colors[ind]);
+                        resTest.size.push(contour.getEpsilon() * 2);
+                    }
+                    for(ind = 0; ind < vortexData[0].length; ++ ind) {
+                        resTest.x.push(vortexData[0][ind]);
+                        resTest.y.push(vortexData[1][ind]);
+                        resTest.color.push(vortexData[2][ind]);
+                        resTest.size.push(0.0043 * 6);
+                    }
+                })();
+
+                data.push(
+                    {
+                        x: resTest.x,
+                        y: resTest.y,
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: {
+                            sizemode: 'diameter',
+                            size: resTest.size,
+                            sizeref: 0.0043,
+                            color: resTest.color,
+                            showscale: true,
+                            colorbar: {
+                                len: 0.5
+                            }
+                        }
+                    }
+                );
+
                 // data.push(
                 //     {
                 //         x: xPoints,
@@ -140,98 +194,200 @@ $(function () {
                 //         type: 'scatter',
                 //         marker: {
                 //             sizemode: 'diameter',
-                //             size: sizes
+                //             size: sizes,
+                //             sizeref: 0.0043
                 //         }
                 //     }
                 // );
-
-                data.push(
-                    {
-                        x: vortexData[0],
-                        y: vortexData[1],
-                        mode: 'markers',
-                        type: 'scatter'
-                    }
-                );
+                //
+                // data.push(
+                //     {
+                //         x: vortexData[0],
+                //         y: vortexData[1],
+                //         mode: 'markers',
+                //         type: 'scatter',
+                //         marker: {
+                //             color: vortexData[2],
+                //             showscale: true,
+                //             colorbar: {
+                //                 len: 0.5
+                //             }
+                //         }
+                //     }
+                // );
 
                 drawGraph(data, shapes);
             };
         } else if ($(this).val() === 'speedConcentration') {
             viewCallback = function () {
-                var vPlot = getSpeed(pointDelta() * 2),
+                var data = getContour(),
+                    speedData = method.getSpeed(plotXY, renderEpsilon),
+                    vortexData = method.getVortex(plotXY),
+                    i,
                     z = [];
 
-                for (var i = 0; i < vPlot[0].length; ++i) {
-                    var element = Math.sqrt(Math.pow(vPlot[2][i][0], 2) + Math.pow(vPlot[2][i][1], 2));
-
-                    z.push(element);
+                for (i = 0; i < speedData[2].length; ++i) {
+                    z.push(Math.sqrt(Math.pow(speedData[2][i].x, 2) + Math.pow(speedData[2][i].y, 2)));
                 }
 
-
-                var data = [
-                    {
-                        z: z,
-                        x: vPlot[0],
-                        y: vPlot[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
+                data.push({
+                    z: z,
+                    x: speedData[0],
+                    y: speedData[1],
+                    type: 'contour',
+                    ncontours: contoursNum,
+                    colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
+                    colorbar: {
+                        x: 1.11
                     }
-                ];
+                });
 
-                Plotly.newPlot('graph', data);
+                var xPoints = [],
+                    yPoints = [],
+                    sizes = [],
+                    points = contour.getPoints();
+
+                for (i = 0; i < points.length; ++i) {
+                    xPoints.push(points[i].x);
+                    yPoints.push(points[i].y);
+                    sizes.push(contour.getEpsilon() * 2);
+                }
+
+                var resTest = {
+                    x: [],
+                    y: [],
+                    color: [],
+                    size:[]
+                };
+                // Just for testing
+                (function(){
+                    var colors = method.getGamma();
+                    for(var ind = 0; ind < points.length; ++ ind) {
+                        resTest.x.push(points[ind].x);
+                        resTest.y.push(points[ind].y);
+                        resTest.color.push(colors[ind]);
+                        resTest.size.push(contour.getEpsilon() * 2);
+                    }
+                    for(ind = 0; ind < vortexData[0].length; ++ ind) {
+                        resTest.x.push(vortexData[0][ind]);
+                        resTest.y.push(vortexData[1][ind]);
+                        resTest.color.push(vortexData[2][ind]);
+                        resTest.size.push(0.0043 * 6);
+                    }
+                })();
+
+                data.push(
+                    {
+                        x: resTest.x,
+                        y: resTest.y,
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: {
+                            sizemode: 'diameter',
+                            size: resTest.size,
+                            sizeref: 0.0043,
+                            color: resTest.color,
+                            showscale: true,
+                            colorbar: {
+                                len: 0.5
+                            }
+                        }
+                    }
+                );
+
+                drawGraph(data);
             };
         } else if ($(this).val() === 'pressure') {
             viewCallback = function () {
-                var vPlot = getSpeed(pointDelta() * 2),
-                    z = [],
-                    vInfSq = vInf[0] * vInf[0] + vInf[1] * vInf[1],
-                    temp = [];
+                var data = getContour(),
+                    speedData = method.getSpeed(plotXY, renderEpsilon),
+                    vortexData = method.getVortex(plotXY),
+                    i,
+                    z = [];
 
-                for (var i = 0; i < gammaW.length; ++i) {
-                    for (var l = 0; l < xyAngular.length; ++l) {
-                        if (xyGammaW[i][2] === xyAngular[l]) {
-                            break;
-                        }
-                    }
-
-                    temp.push(getPointSpeed(xy0[xyAngular[l]][0], xy0[xyAngular[l]][1]));
-                }
-
-                for (var i = 0; i < vPlot[0].length; ++i) {
-                    var element = 1 - (vPlot[2][i][0] * vPlot[2][i][0] + vPlot[2][i][1] * vPlot[2][i][1]) / vInfSq;
-
-                    if (Math.abs(t - tBeg) < 0.0001) {
-                        element -= 2 * getDfiDt(vPlot[0][i], vPlot[1][i], temp) / vInfSq;
-                    }
-
-
+                for (i = 0; i < speedData[2].length; ++i) {
+                    var element = 1 - (speedData[2][i].x * speedData[2][i].x + speedData[2][i].y * speedData[2][i].y);
+                    element -= 2 * method.getDfiDt(speedData[0][i], speedData[1][i]);
                     z.push(element);
                 }
 
-
-                var data = [
-                    {
-                        z: z,
-                        x: vPlot[0],
-                        y: vPlot[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
+                data.push({
+                    z: z,
+                    x: speedData[0],
+                    y: speedData[1],
+                    type: 'contour',
+                    ncontours: contoursNum * 2,
+                    colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
+                    colorbar: {
+                        x: 1.11
                     }
-                ];
+                });
 
-                Plotly.newPlot('graph', data);
+                var resTest = {
+                    x: [],
+                    y: [],
+                    color: [],
+                    size:[]
+                };
+                for(var ind = 0; ind < vortexData[0].length; ++ ind) {
+                    resTest.x.push(vortexData[0][ind]);
+                    resTest.y.push(vortexData[1][ind]);
+                    resTest.color.push(vortexData[2][ind]);
+                    resTest.size.push(0.0043 * 6);
+                }
+                data.push(
+                    {
+                        x: resTest.x,
+                        y: resTest.y,
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: {
+                            sizemode: 'diameter',
+                            size: resTest.size,
+                            sizeref: 0.0043,
+                            color: resTest.color,
+                            showscale: true,
+                            colorbar: {
+                                len: 0.5
+                            }
+                        }
+                    }
+                );
+
+                drawGraph(data);
+                // var vPlot = getSpeed(pointDelta() * 2),
+                //     z = [],
+                //     vInfSq = vInf[0] * vInf[0] + vInf[1] * vInf[1];
+                //
+                // for (var i = 0; i < vPlot[0].length; ++i) {
+                //     var element = 1 - (vPlot[2][i][0] * vPlot[2][i][0] + vPlot[2][i][1] * vPlot[2][i][1]) / vInfSq;
+                //
+                //     if (Math.abs(t - tBeg) < 0.0001) {
+                //         element -= 2 * getDfiDt(vPlot[0][i], vPlot[1][i]) / vInfSq;
+                //     }
+                //
+                //
+                //     z.push(element);
+                // }
+                //
+                //
+                // var data = [
+                //     {
+                //         z: z,
+                //         x: vPlot[0],
+                //         y: vPlot[1],
+                //         type: 'contour',
+                //         ncontours: contoursNum,
+                //         colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
+                //     },
+                //     {
+                //         x: [2, 1, 1, 2],
+                //         y: [1, 1, 2, 2],
+                //         type: 'scatter'
+                //     }
+                // ];
+                //
+                // Plotly.newPlot('graph', data);
             };
         } else if ($(this).val() === 'dfiDt') {
             viewCallback = function() {

@@ -11,12 +11,12 @@
     <script type="text/javascript" src="js/app.js"></script>
 </head>
 <body>
-<div>
+<div id="condition">
     Кількість вузлів:       <input type="text" name="n-count" id="n-count" value="220"><br>
     Початок графіку, х:     <input type="text" name="a-x" id="a-x" value="0.5"><br>
-    Початок графіку, y:     <input type="text" name="a-y" id="a-y" value="0.6"><br>
+    Початок графіку, y:     <input type="text" name="a-y" id="a-y" value="0.9"><br>
     Кінець графіку, х:      <input type="text" name="b-x" id="b-x" value="4"><br>
-    Кінець графіку, y:      <input type="text" name="b-y" id="b-y" value="3.5"><br>
+    Кінець графіку, y:      <input type="text" name="b-y" id="b-y" value="3.8"><br>
     Параметр a:             <input type="text" name="model-a" id="model-a" value="1"><br>
     Параметр alpha:         <input type="text" name="model-alpha" id="model-alpha" value="0.5"><br>
     Параметр delta:         <input type="text" name="model-delta" id="model-delta" value="0.1"><br>
@@ -39,7 +39,11 @@
         <input name="view" class="view" type="radio" value="potentialDip">Потенціальне поле (Диполярний підхід)<br>
         <input name="view" class="view" type="radio" value="flowLines">Лінії току<br>
     </div>
-    <input type="button" id="next" value="Наступний крок">
+    <br>
+    <br>
+    <input type="number" name="n-next" id="n-next" value="1">
+    <input type="button" id="next" value="Наступні n кроків">
+    <br>
     <input type="button" id="auto" value="Автоматично">
     <div id="graph"></div>
 </div>

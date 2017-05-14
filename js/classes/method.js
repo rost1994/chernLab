@@ -19,6 +19,7 @@ var Method = function () {
     var _t = false,
         _tStep = 0.1,
         _gamma = [],
+        _gammaOld = [],
         _gammaW = [],
         _xy0 = [],
         _xyAngular = [],
@@ -65,17 +66,19 @@ var Method = function () {
         };
     };
 
-    /**
-     * Processes one step of method
-     */
-    this.evaluate = function () {
+    this.dataPrepare = function () {
         // Calculate tStep, fill gammaW, etc.
         if (_t !== false) {
             _dataPrepare();
         } else {
             _t = 0;
         }
+    };
 
+    /**
+     * Processes one step of method
+     */
+    this.evaluate = function () {
         // Let's recalculate coordinates of gammaW points
         _processGammaWCoordinates();
 
@@ -87,6 +90,7 @@ var Method = function () {
         _getRightSide();
 
         var gauss = new Gauss(_leftSide, _rightSide);
+        _gammaOld = _gamma;
         _gamma = gauss.solve();
     };
 
@@ -102,19 +106,14 @@ var Method = function () {
                 [],
                 []
             ],
-            zLength = [],
             i;
 
-        var zMax = 0;
+        var wMod = Math.sqrt(Math.pow(_vWhistle.x, 2) + Math.pow(_vWhistle.y, 2));
         for (i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
             for (var j = xyCoord[0].y + step / 2; j < xyCoord[1].y; j = j + step) {
                 var z = _getPointSpeed(i, j);
-
-                zLength.push(Math.sqrt(Math.pow(z.x, 2) + Math.pow(z.y, 2)));
-
-                if (zLength[zLength.length - 1] > zMax) {
-                    zMax = zLength[zLength.length - 1];
-                }
+                z.x *= step / wMod;
+                z.y *= step / wMod;
 
                 result[0].push(i);
                 result[1].push(j);
@@ -122,10 +121,66 @@ var Method = function () {
             }
         }
 
-        for (i = 0; i < result[2].length; ++i) {
-            var k = Math.sqrt(Math.pow(result[2][i].x, 2) + Math.pow(result[2][i].y, 2)) * zMax / (zLength[i] * step);
-            result[2][i].x /= k;
-            result[2][i].y /= k;
+        return result;
+    };
+
+    this.getDfiDt = function(x, y) {
+        var getWR = function (index) {
+            var ret = {
+                x: 0,
+                y: 0
+            };
+            for (var it = 0; it < _xy0.length; ++it) {
+                var speedV = _speedVector(it, _xyGammaW[index].x, _xyGammaW[index].y);
+                ret.x += _gamma[it] * speedV.x;
+                ret.y += _gamma[it] * speedV.y;
+            }
+            for (var jt = 0; jt < _gammaW.length; ++jt) {
+                var speedW = _speedVectorW(jt, _xyGammaW[index].x, _xyGammaW[index].y);
+                ret.x += _gammaW[jt] * speedW.x;
+                ret.y += _gammaW[jt] * speedW.y;
+            }
+
+            return ret;
+        };
+        if (_t == false) {
+            return 0;
+        }
+
+        var result = 0,
+        i;
+
+        for (var j = 0; j < _gamma.length - 1; ++j) {
+            var sum = 0,
+                yTemp = (_xy0[j].y + _xy0[j + 1].y) / 2 - y,
+                xTemp = x - (_xy0[j].x + _xy0[j + 1].x) / 2;
+            for (i = 0; i <= j; ++i) {
+                var wj = _xyAngular.indexOf(i);
+                if (wj !== -1) {
+                    sum += _gammaOld[i] / _tStep;
+                }
+                sum += (_gamma[i] - _gammaOld[i]) / _tStep;
+            }
+
+            result += sum / (2 * Math.PI) * (yTemp * (_xy0[j + 1].x - _xy0[j].x) + xTemp * (_xy0[j + 1].y - _xy0[j].y))
+                / (Math.pow(xTemp, 2) + Math.pow(yTemp, 2));
+        }
+
+        for (var p = 0; p < _xyAngular.length; ++p) {
+            var angularIndex = _xyGammaW.length - (_xyAngular.length - p),
+                yTemp = (_xyGammaW[angularIndex].y + _xy0[_xyAngular[p]].y) / 2 - y,
+                xTemp = x - (_xyGammaW[angularIndex].x + _xy0[_xyAngular[p]].x) / 2;
+
+            result += _gammaW[angularIndex] / (2 * Math.PI * _tStep) *
+                (yTemp * (_xy0[_xyAngular[p]].x - _xyGammaW[angularIndex].x) +
+                xTemp * (_xy0[_xyAngular[p]].y - _xyGammaW[angularIndex].y))
+                / (Math.pow(xTemp, 2) + Math.pow(yTemp, 2));
+        }
+
+        for(var t = 0; t < _gammaW.length; t++) {
+            var temp1 = _speedVectorW(t, x, y),
+                temp2 = getWR(t);
+            result -= _gammaW[t] * (temp1.x * temp2.x + temp1.y * temp2.y);
         }
 
         return result;
@@ -151,6 +206,10 @@ var Method = function () {
         return result;
     };
 
+    this.getGamma = function () {
+        return _gamma;
+    };
+
     /**
      * Return array of speed.
      * @param xyCoord object
@@ -158,6 +217,7 @@ var Method = function () {
      */
     this.getVortex = function (xyCoord) {
         var result = [
+            [],
             [],
             []
         ];
@@ -167,6 +227,7 @@ var Method = function () {
                 && ((_xyGammaW[i].y >= xyCoord[0].y) && (_xyGammaW[i].y <= xyCoord[1].y))) {
                 result[0].push(_xyGammaW[i].x);
                 result[1].push(_xyGammaW[i].y);
+                result[2].push(_gammaW[i]);
             }
         }
 
@@ -180,8 +241,8 @@ var Method = function () {
      *  @private
      */
     var _normal = function (index) {
-        var xy0k = _xy0[index],
-            xy0k1 = _xy0[index + 1];
+        var xy0k1 = _xy0[index],
+            xy0k = _xy0[index + 1];
 
         var divisor = Math.sqrt(Math.pow((xy0k1.x - xy0k.x), 2) + Math.pow((xy0k1.y - xy0k.y), 2));
 
