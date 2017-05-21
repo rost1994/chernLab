@@ -62,7 +62,6 @@ $(function () {
             contour.correctBorderIntersectCallback
         );
         method.evaluate();
-        method.dataPrepare();
 
         solution.show();
 
@@ -78,7 +77,6 @@ $(function () {
            var nNext = parseInt($('#n-next').val());
            for(var j = 0; j < nNext; ++j) {
                method.evaluate();
-               method.dataPrepare();
            }
            solution.show();
 
@@ -98,7 +96,6 @@ $(function () {
         var nNext = parseInt($('#n-next').val());
         for(var j = 0; j < nNext; ++j) {
             method.evaluate();
-            method.dataPrepare();
         }
 
         solution.show();
@@ -185,36 +182,6 @@ $(function () {
                         }
                     }
                 );
-
-                // data.push(
-                //     {
-                //         x: xPoints,
-                //         y: yPoints,
-                //         mode: 'markers',
-                //         type: 'scatter',
-                //         marker: {
-                //             sizemode: 'diameter',
-                //             size: sizes,
-                //             sizeref: 0.0043
-                //         }
-                //     }
-                // );
-                //
-                // data.push(
-                //     {
-                //         x: vortexData[0],
-                //         y: vortexData[1],
-                //         mode: 'markers',
-                //         type: 'scatter',
-                //         marker: {
-                //             color: vortexData[2],
-                //             showscale: true,
-                //             colorbar: {
-                //                 len: 0.5
-                //             }
-                //         }
-                //     }
-                // );
 
                 drawGraph(data, shapes);
             };
@@ -307,7 +274,7 @@ $(function () {
 
                 for (i = 0; i < speedData[2].length; ++i) {
                     var element = 1 - (speedData[2][i].x * speedData[2][i].x + speedData[2][i].y * speedData[2][i].y);
-                    element -= 2 * method.getDfiDt(speedData[0][i], speedData[1][i]);
+                    element += 2 * method.getDfiDt(speedData[0][i], speedData[1][i]);
                     z.push(element);
                 }
 
@@ -316,7 +283,7 @@ $(function () {
                     x: speedData[0],
                     y: speedData[1],
                     type: 'contour',
-                    ncontours: contoursNum * 2,
+                    ncontours: contoursNum * 3,
                     colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
                     colorbar: {
                         x: 1.11
@@ -388,114 +355,6 @@ $(function () {
                 // ];
                 //
                 // Plotly.newPlot('graph', data);
-            };
-        } else if ($(this).val() === 'dfiDt') {
-            viewCallback = function() {
-                var result = [[],[],[]],
-                    step = pointDelta() * 2,
-                    temp = [];
-
-                for (var i = 0; i < gammaW.length; ++i) {
-                    for (var l = 0; l < xyAngular.length; ++l) {
-                        if (xyGammaW[i][2] === xyAngular[l]) {
-                            break;
-                        }
-                    }
-
-                    temp.push(getPointSpeed(xy0[xyAngular[l]][0], xy0[xyAngular[l]][1]));
-                }
-
-                for (var i = plotXY[0][0]; i < plotXY[0][1]; i = i + step) {
-                    for (var j = plotXY[1][0]; j < plotXY[1][1]; j = j + step) {
-                        result[0].push(i);
-                        result[1].push(j);
-                        result[2].push(getDfiDt(i, j, temp));
-                    }
-                }
-
-                var data = [
-                    {
-                        z: result[2],
-                        x: result[0],
-                        y: result[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
-                    }
-                ];
-
-                Plotly.newPlot('graph', data);
-            };
-        } else if ($(this).val() === 'potential') {
-            viewCallback = function () {
-                var fi = getFi();
-
-                var data = [
-                    {
-                        z: fi[2],
-                        x: fi[0],
-                        y: fi[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
-                    }
-                ];
-
-                Plotly.newPlot('graph', data);
-            };
-        } else if ($(this).val() === 'potentialDip') {
-            viewCallback = function () {
-                var fi = getFiDip();
-
-                var data = [
-                    {
-                        z: fi[2],
-                        x: fi[0],
-                        y: fi[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
-                    }
-                ];
-
-                Plotly.newPlot('graph', data);
-            };
-        } else if ($(this).val() === 'flowLines') {
-            viewCallback = function () {
-                var psi = getPsi();
-
-                var data = [
-                    {
-                        z: psi[2],
-                        x: psi[0],
-                        y: psi[1],
-                        type: 'contour',
-                        ncontours: contoursNum,
-                        colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                    },
-                    {
-                        x: [2, 1, 1, 2],
-                        y: [1, 1, 2, 2],
-                        type: 'scatter'
-                    }
-                ];
-
-                Plotly.newPlot('graph', data);
             };
         }
 

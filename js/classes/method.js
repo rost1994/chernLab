@@ -66,19 +66,17 @@ var Method = function () {
         };
     };
 
-    this.dataPrepare = function () {
+    /**
+     * Processes one step of method
+     */
+    this.evaluate = function () {
         // Calculate tStep, fill gammaW, etc.
         if (_t !== false) {
             _dataPrepare();
         } else {
             _t = 0;
         }
-    };
 
-    /**
-     * Processes one step of method
-     */
-    this.evaluate = function () {
         // Let's recalculate coordinates of gammaW points
         _processGammaWCoordinates();
 
@@ -125,24 +123,6 @@ var Method = function () {
     };
 
     this.getDfiDt = function(x, y) {
-        var getWR = function (index) {
-            var ret = {
-                x: 0,
-                y: 0
-            };
-            for (var it = 0; it < _xy0.length; ++it) {
-                var speedV = _speedVector(it, _xyGammaW[index].x, _xyGammaW[index].y);
-                ret.x += _gamma[it] * speedV.x;
-                ret.y += _gamma[it] * speedV.y;
-            }
-            for (var jt = 0; jt < _gammaW.length; ++jt) {
-                var speedW = _speedVectorW(jt, _xyGammaW[index].x, _xyGammaW[index].y);
-                ret.x += _gammaW[jt] * speedW.x;
-                ret.y += _gammaW[jt] * speedW.y;
-            }
-
-            return ret;
-        };
         if (_t == false) {
             return 0;
         }
@@ -171,15 +151,21 @@ var Method = function () {
                 yTemp = (_xyGammaW[angularIndex].y + _xy0[_xyAngular[p]].y) / 2 - y,
                 xTemp = x - (_xyGammaW[angularIndex].x + _xy0[_xyAngular[p]].x) / 2;
 
-            result += _gammaW[angularIndex] / (2 * Math.PI * _tStep) *
+            result += (_gammaOld[_xyAngular[p]] / _tStep + (_gamma[_xyAngular[p]] - _gammaOld[_xyAngular[p]]) / _tStep) / (2 * Math.PI) *
                 (yTemp * (_xy0[_xyAngular[p]].x - _xyGammaW[angularIndex].x) +
                 xTemp * (_xy0[_xyAngular[p]].y - _xyGammaW[angularIndex].y))
                 / (Math.pow(xTemp, 2) + Math.pow(yTemp, 2));
         }
 
+        for (var j = 0; j < _gamma.length; ++j) {
+            var temp1 = _getPointSpeed(_xy0[j].x, _xy0[j].y),
+                temp2 = _speedVector(j, x, y);
+            result -= _gamma[j] * (temp1.x * temp2.x + temp1.y * temp2.y);
+        }
+
         for(var t = 0; t < _gammaW.length; t++) {
             var temp1 = _speedVectorW(t, x, y),
-                temp2 = getWR(t);
+                temp2 = _getPointSpeed(_xyGammaW[t].x, _xyGammaW[t].y);
             result -= _gammaW[t] * (temp1.x * temp2.x + temp1.y * temp2.y);
         }
 
@@ -241,8 +227,8 @@ var Method = function () {
      *  @private
      */
     var _normal = function (index) {
-        var xy0k1 = _xy0[index],
-            xy0k = _xy0[index + 1];
+        var xy0k = _xy0[index],
+            xy0k1 = _xy0[index + 1];
 
         var divisor = Math.sqrt(Math.pow((xy0k1.x - xy0k.x), 2) + Math.pow((xy0k1.y - xy0k.y), 2));
 
@@ -324,11 +310,6 @@ var Method = function () {
      * @private
      */
     var _getPointSpeed = function (x, y) {
-        // var z = {
-        //     x: vInf[0],
-        //     y: vInf[1]
-        // };
-        // TODO: VInf was at this place
         var z = {
                 x: 0,
                 y: 0
