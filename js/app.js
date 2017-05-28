@@ -150,17 +150,7 @@ $(function () {
                             x: resTest.x,
                             y: resTest.y,
                             mode: 'markers',
-                            type: 'scatter',
-                            marker: {
-                                sizemode: 'diameter',
-                                size: resTest.size,
-                                sizeref: 0.0043,
-                                color: resTest.color,
-                                showscale: true,
-                                colorbar: {
-                                    len: 0.5
-                                }
-                            }
+                            type: 'scatter'
                         }
                     );
                 })();
@@ -212,17 +202,7 @@ $(function () {
                             x: resTest.x,
                             y: resTest.y,
                             mode: 'markers',
-                            type: 'scatter',
-                            marker: {
-                                sizemode: 'diameter',
-                                size: resTest.size,
-                                sizeref: 0.0043,
-                                color: resTest.color,
-                                showscale: true,
-                                colorbar: {
-                                    len: 0.5
-                                }
-                            }
+                            type: 'scatter'
                         }
                     );
                 })();
@@ -276,17 +256,7 @@ $(function () {
                             x: resTest.x,
                             y: resTest.y,
                             mode: 'markers',
-                            type: 'scatter',
-                            marker: {
-                                sizemode: 'diameter',
-                                size: resTest.size,
-                                sizeref: 0.0043,
-                                color: resTest.color,
-                                showscale: true,
-                                colorbar: {
-                                    len: 0.5
-                                }
-                            }
+                            type: 'scatter'
                         }
                     );
                 })();
@@ -332,17 +302,7 @@ $(function () {
                             x: resTest.x,
                             y: resTest.y,
                             mode: 'markers',
-                            type: 'scatter',
-                            marker: {
-                                sizemode: 'diameter',
-                                size: resTest.size,
-                                sizeref: 0.0043,
-                                color: resTest.color,
-                                showscale: true,
-                                colorbar: {
-                                    len: 0.5
-                                }
-                            }
+                            type: 'scatter'
                         }
                     );
                 })();
