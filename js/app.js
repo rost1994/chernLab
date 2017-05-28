@@ -337,6 +337,7 @@ $(function () {
                                 sizemode: 'diameter',
                                 size: resTest.size,
                                 sizeref: 0.0043,
+                                color: resTest.color,
                                 showscale: true,
                                 colorbar: {
                                     len: 0.5
