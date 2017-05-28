@@ -90,6 +90,16 @@ var Method = function () {
         var gauss = new Gauss(_leftSide, _rightSide);
         _gammaOld = _gamma;
         _gamma = gauss.solve();
+
+        this.speedCache = [];
+        for (var j = 0; j < _gamma.length; ++j) {
+            this.speedCache[j] = _getPointSpeed(_xy0[j].x, _xy0[j].y);
+        }
+
+        this.speedCacheW = [];
+        for(var t = 0; t < _gammaW.length; t++) {
+            this.speedCacheW[t] = _getPointSpeed(_xyGammaW[t].x, _xyGammaW[t].y);
+        }
     };
 
     /**
@@ -122,7 +132,62 @@ var Method = function () {
         return result;
     };
 
+    /**
+     * Return array of flow lines.
+     * @param xyCoord
+     * @param step
+     * @return {[*,*,*]}
+     */
+    this.getPsi = function (xyCoord, step) {
+        var result = [
+            [],
+            [],
+            []
+        ];
+
+        for (var i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
+            for (var j = xyCoord[0].y + step / 2; j < xyCoord[1].y; j = j + step) {
+                var z = _vWhistle.y * j - _vWhistle.x * i,
+                    tempVarGamma = 1,
+                    tempVarGammaW = 1,
+                    k,
+                    rj;
+
+                for (k = 0; k < _gamma.length; ++k) {
+                    rj = Math.max(_eps, Math.sqrt(Math.pow((i - _xy0[k].x), 2) + Math.pow((j - _xy0[k].y), 2)));
+                    tempVarGamma *= Math.pow(rj, (_gamma[k] / (2 * Math.PI)));
+                }
+
+                for (k = 0; k < _gammaW.length; ++k) {
+                    rj = Math.max(_eps, Math.sqrt(Math.pow((i - _xyGammaW[k].x), 2) + Math.pow((j - _xyGammaW[k].y), 2)));
+                    tempVarGammaW *= Math.pow(rj, (_gammaW[k] / (2 * Math.PI)));
+                }
+
+                z = z - tempVarGamma - tempVarGammaW;
+
+                result[0].push(i);
+                result[1].push(j);
+                result[2].push(z);
+            }
+        }
+
+        return result;
+    };
+
     this.getDfiDt = function(x, y) {
+        for (var i = 0; i < _xy0.length; ++i) {
+            if (Math.sqrt(Math.pow(_xy0[i].x - x, 2) + Math.pow(_xy0[i].y - y, 2)) < _eps) {
+                return 0;
+            }
+            if (i !== 0) {
+                var xT = (_xy0[i - 1].x + _xy0[i].x) / 2,
+                    yT = (_xy0[i - 1].y + _xy0[i].y) / 2;
+                if (Math.sqrt(Math.pow(xT - x, 2) + Math.pow(yT - y, 2)) < _eps) {
+                    return 0;
+                }
+            }
+        }
+
         if (_t == false) {
             return 0;
         }
@@ -158,14 +223,14 @@ var Method = function () {
         }
 
         for (var j = 0; j < _gamma.length; ++j) {
-            var temp1 = _getPointSpeed(_xy0[j].x, _xy0[j].y),
+            var temp1 = this.speedCache[j],
                 temp2 = _speedVector(j, x, y);
             result -= _gamma[j] * (temp1.x * temp2.x + temp1.y * temp2.y);
         }
 
         for(var t = 0; t < _gammaW.length; t++) {
             var temp1 = _speedVectorW(t, x, y),
-                temp2 = _getPointSpeed(_xyGammaW[t].x, _xyGammaW[t].y);
+                temp2 = this.speedCacheW[t];
             result -= _gammaW[t] * (temp1.x * temp2.x + temp1.y * temp2.y);
         }
 

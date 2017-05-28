@@ -108,13 +108,11 @@ $(function () {
             viewCallback = function () {
                 var data = getContour(),
                     speedData = method.getSpeed(plotXY, renderEpsilon),
-                    vortexData = method.getVortex(plotXY),
                     i;
 
-                var shapes = [];//method.getNormales();
+                var shapes = [];
 
                 for (i = 0; i < speedData[0].length; ++i) {
-                    //var divider = Math.sqrt(Math.pow(speedData[2][i].x, 2) + Math.pow(speedData[2][i].y, 2)),
                     if (Math.sqrt(Math.pow(speedData[2][i].x, 2)+Math.pow(speedData[2][i].y, 2)) < renderEpsilon * 0.1) continue;
                     shapes.push(
                         {
@@ -130,58 +128,42 @@ $(function () {
                     );
                 }
 
-                var xPoints = [],
-                    yPoints = [],
-                    sizes = [],
-                    points = contour.getPoints();
-
-                for (i = 0; i < points.length; ++i) {
-                    xPoints.push(points[i].x);
-                    yPoints.push(points[i].y);
-                    sizes.push(contour.getEpsilon() * 2);
-                }
-
-                var resTest = {
-                    x: [],
-                    y: [],
-                    color: [],
-                    size:[]
-                };
                 // Just for testing
-                (function(){
-                    var colors = method.getGamma();
-                    for(var ind = 0; ind < points.length; ++ ind) {
-                        resTest.x.push(points[ind].x);
-                        resTest.y.push(points[ind].y);
-                        resTest.color.push(colors[ind]);
-                        resTest.size.push(contour.getEpsilon() * 2);
-                    }
-                    for(ind = 0; ind < vortexData[0].length; ++ ind) {
+                (function () {
+                    var vortexData = method.getVortex(plotXY),
+                        resTest = {
+                            x: [],
+                            y: [],
+                            color: [],
+                            size: []
+                        };
+
+                    for (var ind = 0; ind < vortexData[0].length; ++ind) {
                         resTest.x.push(vortexData[0][ind]);
                         resTest.y.push(vortexData[1][ind]);
                         resTest.color.push(vortexData[2][ind]);
                         resTest.size.push(0.0043 * 6);
                     }
-                })();
 
-                data.push(
-                    {
-                        x: resTest.x,
-                        y: resTest.y,
-                        mode: 'markers',
-                        type: 'scatter',
-                        marker: {
-                            sizemode: 'diameter',
-                            size: resTest.size,
-                            sizeref: 0.0043,
-                            color: resTest.color,
-                            showscale: true,
-                            colorbar: {
-                                len: 0.5
+                    data.push(
+                        {
+                            x: resTest.x,
+                            y: resTest.y,
+                            mode: 'markers',
+                            type: 'scatter',
+                            marker: {
+                                sizemode: 'diameter',
+                                size: resTest.size,
+                                sizeref: 0.0043,
+                                color: resTest.color,
+                                showscale: true,
+                                colorbar: {
+                                    len: 0.5
+                                }
                             }
                         }
-                    }
-                );
+                    );
+                })();
 
                 drawGraph(data, shapes);
             };
@@ -189,7 +171,6 @@ $(function () {
             viewCallback = function () {
                 var data = getContour(),
                     speedData = method.getSpeed(plotXY, renderEpsilon),
-                    vortexData = method.getVortex(plotXY),
                     i,
                     z = [];
 
@@ -209,58 +190,42 @@ $(function () {
                     }
                 });
 
-                var xPoints = [],
-                    yPoints = [],
-                    sizes = [],
-                    points = contour.getPoints();
-
-                for (i = 0; i < points.length; ++i) {
-                    xPoints.push(points[i].x);
-                    yPoints.push(points[i].y);
-                    sizes.push(contour.getEpsilon() * 2);
-                }
-
-                var resTest = {
-                    x: [],
-                    y: [],
-                    color: [],
-                    size:[]
-                };
                 // Just for testing
                 (function(){
-                    var colors = method.getGamma();
-                    for(var ind = 0; ind < points.length; ++ ind) {
-                        resTest.x.push(points[ind].x);
-                        resTest.y.push(points[ind].y);
-                        resTest.color.push(colors[ind]);
-                        resTest.size.push(contour.getEpsilon() * 2);
-                    }
-                    for(ind = 0; ind < vortexData[0].length; ++ ind) {
+                    var resTest = {
+                            x: [],
+                            y: [],
+                            color: [],
+                            size: []
+                        },
+                        vortexData = method.getVortex(plotXY);
+
+                    for(var ind = 0; ind < vortexData[0].length; ++ ind) {
                         resTest.x.push(vortexData[0][ind]);
                         resTest.y.push(vortexData[1][ind]);
                         resTest.color.push(vortexData[2][ind]);
                         resTest.size.push(0.0043 * 6);
                     }
-                })();
 
-                data.push(
-                    {
-                        x: resTest.x,
-                        y: resTest.y,
-                        mode: 'markers',
-                        type: 'scatter',
-                        marker: {
-                            sizemode: 'diameter',
-                            size: resTest.size,
-                            sizeref: 0.0043,
-                            color: resTest.color,
-                            showscale: true,
-                            colorbar: {
-                                len: 0.5
+                    data.push(
+                        {
+                            x: resTest.x,
+                            y: resTest.y,
+                            mode: 'markers',
+                            type: 'scatter',
+                            marker: {
+                                sizemode: 'diameter',
+                                size: resTest.size,
+                                sizeref: 0.0043,
+                                color: resTest.color,
+                                showscale: true,
+                                colorbar: {
+                                    len: 0.5
+                                }
                             }
                         }
-                    }
-                );
+                    );
+                })();
 
                 drawGraph(data);
             };
@@ -268,7 +233,6 @@ $(function () {
             viewCallback = function () {
                 var data = getContour(),
                     speedData = method.getSpeed(plotXY, renderEpsilon),
-                    vortexData = method.getVortex(plotXY),
                     i,
                     z = [];
 
@@ -290,71 +254,99 @@ $(function () {
                     }
                 });
 
-                var resTest = {
-                    x: [],
-                    y: [],
-                    color: [],
-                    size:[]
-                };
-                for(var ind = 0; ind < vortexData[0].length; ++ ind) {
-                    resTest.x.push(vortexData[0][ind]);
-                    resTest.y.push(vortexData[1][ind]);
-                    resTest.color.push(vortexData[2][ind]);
-                    resTest.size.push(0.0043 * 6);
-                }
-                data.push(
-                    {
-                        x: resTest.x,
-                        y: resTest.y,
-                        mode: 'markers',
-                        type: 'scatter',
-                        marker: {
-                            sizemode: 'diameter',
-                            size: resTest.size,
-                            sizeref: 0.0043,
-                            color: resTest.color,
-                            showscale: true,
-                            colorbar: {
-                                len: 0.5
+                // Just for testing
+                (function () {
+                    var vortexData = method.getVortex(plotXY),
+                        resTest = {
+                            x: [],
+                            y: [],
+                            color: [],
+                            size: []
+                        };
+
+                    for (var ind = 0; ind < vortexData[0].length; ++ind) {
+                        resTest.x.push(vortexData[0][ind]);
+                        resTest.y.push(vortexData[1][ind]);
+                        resTest.color.push(vortexData[2][ind]);
+                        resTest.size.push(0.0043 * 6);
+                    }
+
+                    data.push(
+                        {
+                            x: resTest.x,
+                            y: resTest.y,
+                            mode: 'markers',
+                            type: 'scatter',
+                            marker: {
+                                sizemode: 'diameter',
+                                size: resTest.size,
+                                sizeref: 0.0043,
+                                color: resTest.color,
+                                showscale: true,
+                                colorbar: {
+                                    len: 0.5
+                                }
                             }
                         }
-                    }
-                );
+                    );
+                })();
 
                 drawGraph(data);
-                // var vPlot = getSpeed(pointDelta() * 2),
-                //     z = [],
-                //     vInfSq = vInf[0] * vInf[0] + vInf[1] * vInf[1];
-                //
-                // for (var i = 0; i < vPlot[0].length; ++i) {
-                //     var element = 1 - (vPlot[2][i][0] * vPlot[2][i][0] + vPlot[2][i][1] * vPlot[2][i][1]) / vInfSq;
-                //
-                //     if (Math.abs(t - tBeg) < 0.0001) {
-                //         element -= 2 * getDfiDt(vPlot[0][i], vPlot[1][i]) / vInfSq;
-                //     }
-                //
-                //
-                //     z.push(element);
-                // }
-                //
-                //
-                // var data = [
-                //     {
-                //         z: z,
-                //         x: vPlot[0],
-                //         y: vPlot[1],
-                //         type: 'contour',
-                //         ncontours: contoursNum,
-                //         colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']]
-                //     },
-                //     {
-                //         x: [2, 1, 1, 2],
-                //         y: [1, 1, 2, 2],
-                //         type: 'scatter'
-                //     }
-                // ];
-                //
-                // Plotly.newPlot('graph', data);
+            };
+        } else if ($(this).val() === 'flowLines') {
+            viewCallback = function () {
+                var data = getContour(),
+                    flowLinesData = method.getPsi(plotXY, renderEpsilon);
+
+                data.push({
+                    z: flowLinesData[2],
+                    x: flowLinesData[0],
+                    y: flowLinesData[1],
+                    type: 'contour',
+                    ncontours: contoursNum,
+                    colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
+                    colorbar: {
+                        x: 1.11
+                    }
+                });
+
+                // Just for testing
+                (function () {
+                    var resTest = {
+                            x: [],
+                            y: [],
+                            color: [],
+                            size: []
+                        },
+                        vortexData = method.getVortex(plotXY);
+
+                    for(var ind = 0; ind < vortexData[0].length; ++ ind) {
+                        resTest.x.push(vortexData[0][ind]);
+                        resTest.y.push(vortexData[1][ind]);
+                        resTest.color.push(vortexData[2][ind]);
+                        resTest.size.push(0.0043 * 6);
+                    }
+
+                    data.push(
+                        {
+                            x: resTest.x,
+                            y: resTest.y,
+                            mode: 'markers',
+                            type: 'scatter',
+                            marker: {
+                                sizemode: 'diameter',
+                                size: resTest.size,
+                                sizeref: 0.0043,
+                                showscale: true,
+                                colorbar: {
+                                    len: 0.5
+                                }
+                            }
+                        }
+                    );
+                })();
+
+                drawGraph(data);
             };
         }
 
