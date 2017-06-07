@@ -147,7 +147,7 @@ var Method = function () {
 
         for (var i = xyCoord[0].x + step / 2; i < xyCoord[1].x; i = i + step) {
             for (var j = xyCoord[0].y + step / 2; j < xyCoord[1].y; j = j + step) {
-                var z = _vWhistle.y * j - _vWhistle.x * i,
+                var z = 0,
                     tempVarGamma = 1,
                     tempVarGammaW = 1,
                     k,
@@ -175,19 +175,6 @@ var Method = function () {
     };
 
     this.getDfiDt = function(x, y) {
-        for (var i = 0; i < _xy0.length; ++i) {
-            if (Math.sqrt(Math.pow(_xy0[i].x - x, 2) + Math.pow(_xy0[i].y - y, 2)) < _eps) {
-                return 0;
-            }
-            if (i !== 0) {
-                var xT = (_xy0[i - 1].x + _xy0[i].x) / 2,
-                    yT = (_xy0[i - 1].y + _xy0[i].y) / 2;
-                if (Math.sqrt(Math.pow(xT - x, 2) + Math.pow(yT - y, 2)) < _eps) {
-                    return 0;
-                }
-            }
-        }
-
         if (_t == false) {
             return 0;
         }
@@ -202,9 +189,9 @@ var Method = function () {
             for (i = 0; i <= j; ++i) {
                 var wj = _xyAngular.indexOf(i);
                 if (wj !== -1) {
-                    sum += _gammaOld[i] / _tStep;
+                    sum += _gammaOld[i];
                 }
-                sum += (_gamma[i] - _gammaOld[i]) / _tStep;
+                sum += (_gamma[i] - _gammaOld[i]);
             }
 
             result += sum / (2 * Math.PI) * (yTemp * (_xy0[j + 1].x - _xy0[j].x) + xTemp * (_xy0[j + 1].y - _xy0[j].y))
@@ -216,7 +203,7 @@ var Method = function () {
                 yTemp = (_xyGammaW[angularIndex].y + _xy0[_xyAngular[p]].y) / 2 - y,
                 xTemp = x - (_xyGammaW[angularIndex].x + _xy0[_xyAngular[p]].x) / 2;
 
-            result += (_gammaOld[_xyAngular[p]] / _tStep + (_gamma[_xyAngular[p]] - _gammaOld[_xyAngular[p]]) / _tStep) / (2 * Math.PI) *
+            result += (_gammaOld[_xyAngular[p]] + (_gamma[_xyAngular[p]] - _gammaOld[_xyAngular[p]])) / (2 * Math.PI) *
                 (yTemp * (_xy0[_xyAngular[p]].x - _xyGammaW[angularIndex].x) +
                 xTemp * (_xy0[_xyAngular[p]].y - _xyGammaW[angularIndex].y))
                 / (Math.pow(xTemp, 2) + Math.pow(yTemp, 2));

@@ -227,7 +227,7 @@ $(function () {
                     x: speedData[0],
                     y: speedData[1],
                     type: 'contour',
-                    ncontours: contoursNum * 3,
+                    ncontours: contoursNum * 2,
                     colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
                     colorbar: {
                         x: 1.11
@@ -273,7 +273,7 @@ $(function () {
                     x: flowLinesData[0],
                     y: flowLinesData[1],
                     type: 'contour',
-                    ncontours: contoursNum,
+                    ncontours: contoursNum * 2,
                     colorscale: [[0, 'rgb(255,255,255)'], [1, 'rgb(0,0,0)']],
                     colorbar: {
                         x: 1.11

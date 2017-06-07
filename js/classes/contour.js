@@ -161,7 +161,7 @@ var Contour = function () {
 
         _discretePoints.push(_points.length - 1);
 
-        _eps = _processEpsilon(epsilonIndexStart) / 2;
+        _eps = step / 2;
 
         _correctBorderIntersect = function (pointOld, pointNew) {
             var middlePointX = (pointOld.x + pointNew.x) / 2,
